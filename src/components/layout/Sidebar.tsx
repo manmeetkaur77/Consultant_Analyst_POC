@@ -15,6 +15,7 @@ import {
   Loader2,
   GitCompareArrows,
   GitPullRequest,
+  Briefcase,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,11 @@ import { THEME } from "@/config/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiGet } from "@/services/api";
 
+// DEMO MODE — only the Consulting Agent (Joseph) is exposed in the sidebar.
+// Other modules are temporarily commented out. To restore the full nav,
+// uncomment the entries inside the block below.
 const navigationItems = [
+  /*
   {
     icon: FileText,
     label: "BRD Assistant",
@@ -90,6 +95,15 @@ const navigationItems = [
     id: "harness",
     path: "/harness",
   },
+  */
+  {
+    icon: Briefcase,
+    label: "Consulting Agent",
+    description: "Advisory workflows & client engagements",
+    id: "consulting-agent",
+    path: "/consulting-agent",
+    alwaysVisible: true,
+  },
 ];
 
 type NavItem = (typeof navigationItems)[number];
@@ -115,10 +129,15 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
   const [codeIntelOpen, setCodeIntelOpen] = useState(false);
 
   // Filter navigation items based on user's group memberships
-  const visibleItems = navigationItems.filter((item) => hasModuleAccess(item.id));
+  // Items with `alwaysVisible: true` bypass the module-access check.
+  const visibleItems = navigationItems.filter(
+    (item) => ("alwaysVisible" in item && item.alwaysVisible) || hasModuleAccess(item.id),
+  );
   // Code Intelligence is rendered as one entry in TOOLS that opens a chooser
   // modal (BRD Sync / PR Sync). Gate on access to either sub-route.
-  const canSeeCodeIntelligence = hasModuleAccess("brd-sync") || hasModuleAccess("pr-sync");
+  // DEMO MODE — forced off so only Consulting Agent shows. Restore by
+  // reverting to `hasModuleAccess("brd-sync") || hasModuleAccess("pr-sync")`.
+  const canSeeCodeIntelligence = false;
 
   // Map current page to heading text to search for in the user guide
   const MODULE_HEADING_MAP: Record<string, string> = {

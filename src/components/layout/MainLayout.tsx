@@ -1,6 +1,8 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Sidebar } from "./Sidebar";
-import { TopHeader } from "@/components/header/TopHeader";
+// DEMO MODE — TopHeader hidden. Re-enable by uncommenting below + restoring
+// the <TopHeader> block + `pt-16` spacer below.
+// import { TopHeader } from "@/components/header/TopHeader";
 import { type Project } from "@/services/projectApi";
 
 interface MainLayoutProps {
@@ -61,18 +63,22 @@ export const MainLayout = ({ children, showBackButton, onBack, currentView }: Ma
       <div className={`flex-1 overflow-auto transition-all duration-300 bg-white ${
         isMobile ? 'ml-0' : (sidebarCollapsed ? 'ml-16' : 'ml-60')
       }`}>
-        {/* Header */}
+        {/* DEMO MODE — TopHeader is hidden so Consulting Agent gets the full viewport.
+            Restore by uncommenting the block below and re-adding `pt-16` on the
+            children wrapper. */}
+        {/*
         <div className={`fixed top-0 right-0 z-50 transition-all duration-300 ${
           isMobile ? 'left-0' : (sidebarCollapsed ? 'left-16' : 'left-60')
         }`}>
-          <TopHeader 
+          <TopHeader
             onMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             isMobile={isMobile}
             currentView={currentView}
           />
         </div>
-        
-        <div className="pt-16">
+        */}
+
+        <div>
           {children}
         </div>
       </div>

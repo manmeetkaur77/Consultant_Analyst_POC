@@ -25,6 +25,7 @@ import OrganizationUsage from "./pages/OrganizationUsage";
 import BRDSyncPage from "./pages/BRDSyncPage";
 import BRDComparisonPage from "./pages/BRDComparisonPage";
 import PRSyncPlaceholder from "./pages/PRSyncPlaceholder";
+import ConsultingAgent from "./pages/ConsultingAgent";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -206,6 +207,15 @@ const App = () => {
                     <ModuleProtectedRoute moduleId="pr-sync">
                       <PRSyncPlaceholder />
                     </ModuleProtectedRoute>
+                  }
+                />
+                {/* Consulting Agent — ungated, auth-only */}
+                <Route
+                  path="/consulting-agent"
+                  element={
+                    <ProtectedRoute>
+                      <ConsultingAgent />
+                    </ProtectedRoute>
                   }
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
