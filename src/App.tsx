@@ -26,6 +26,7 @@ import BRDSyncPage from "./pages/BRDSyncPage";
 import BRDComparisonPage from "./pages/BRDComparisonPage";
 import PRSyncPlaceholder from "./pages/PRSyncPlaceholder";
 import ConsultingAgent from "./pages/ConsultingAgent";
+import InsightsPage from "./pages/InsightsPage";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -215,6 +216,15 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <ConsultingAgent />
+                    </ProtectedRoute>
+                  }
+                />
+                {/* Insights — leadership portfolio view */}
+                <Route
+                  path="/insights"
+                  element={
+                    <ProtectedRoute>
+                      <InsightsPage />
                     </ProtectedRoute>
                   }
                 />

@@ -55,6 +55,37 @@ export interface Sibling {
   one_liner: string;
 }
 
+export interface InsightAssessment extends Sibling {
+  assessed_at?: string;
+  assessed_by?: string;
+  report_markdown?: string;
+  is_fresh?: boolean;
+}
+
+export type KBDocType =
+  | "vendor"
+  | "internal"
+  | "ticket"
+  | "lessons"
+  | "benchmark"
+  | "other";
+
+export interface KBResult {
+  id: string;
+  title: string;
+  url: string;
+  snippet: string;
+  type: KBDocType;
+  icon: string;
+  relevance: number;
+  consumed: boolean;
+}
+
+export interface KBResultsPayload {
+  results: KBResult[];
+  consumed_ids: string[];
+}
+
 export type ConsultingSSEEvent =
   | { type: "chunk"; content: string }
   | { type: "metadata"; session_id: string }
@@ -77,6 +108,11 @@ export type ConsultingSSEEvent =
       type: "state";
       kind: "report";
       payload: string;
+    }
+  | {
+      type: "state";
+      kind: "kb_results";
+      payload: KBResultsPayload;
     }
   | { type: "done" }
   | { type: "error"; message: string };
@@ -173,6 +209,31 @@ export async function fetchSiblings(): Promise<Sibling[]> {
   const response = await apiGet(`${BASE}/siblings`);
   if (!response.ok) throw new Error(`Siblings fetch failed: ${response.status}`);
   return (await response.json()) as Sibling[];
+}
+
+export async function fetchInsights(): Promise<InsightAssessment[]> {
+  const response = await apiGet(`${BASE}/insights`);
+  if (!response.ok) throw new Error(`Insights fetch failed: ${response.status}`);
+  return (await response.json()) as InsightAssessment[];
+}
+
+export async function saveToInsights(args: {
+  sessionId: string;
+  title: string;
+  sponsor?: string;
+  reportMarkdown: string;
+}): Promise<{ saved: boolean; id: string }> {
+  const response = await apiPost(`${BASE}/insights/save`, {
+    session_id: args.sessionId,
+    title: args.title,
+    sponsor: args.sponsor,
+    report_markdown: args.reportMarkdown,
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Save to Insights failed: ${response.status} ${text.slice(0, 200)}`);
+  }
+  return (await response.json()) as { saved: boolean; id: string };
 }
 
 export async function exportReport(

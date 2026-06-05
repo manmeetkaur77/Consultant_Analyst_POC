@@ -16,6 +16,7 @@ import {
   GitCompareArrows,
   GitPullRequest,
   Briefcase,
+  Library,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -97,9 +98,17 @@ const navigationItems = [
   },
   */
   {
+    icon: Library,
+    label: "Insights",
+    description: "AI use cases assessed across the org",
+    id: "insights",
+    path: "/insights",
+    alwaysVisible: true,
+  },
+  {
     icon: Briefcase,
     label: "Consulting Agent",
-    description: "Advisory workflows & client engagements",
+    description: "Work a new idea with Joseph",
     id: "consulting-agent",
     path: "/consulting-agent",
     alwaysVisible: true,
@@ -294,21 +303,6 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
               className="h-[32px] w-auto"
             />
           )}
-          {THEME === "deluxe" && (collapsed && !isMobile) && (
-            <span className="text-[1.35rem] font-semibold tracking-[0.06em] text-gray-900 select-none">
-              vl<span className="text-primary">x</span>
-            </span>
-          )}
-          {THEME === "deluxe" && (!collapsed || isMobile) && (
-            <div className="flex flex-col">
-              <span className="text-[1.35rem] font-semibold tracking-tight text-gray-900 leading-none">
-                Velo<span className="text-primary">x</span>
-              </span>
-              <span className="text-[0.65rem] font-semibold tracking-wider text-gray-500 mt-0.5">
-                Drive Engineering Excellence @dlx
-              </span>
-            </div>
-          )}
         </Link>
 
         {isMobile && (
@@ -460,31 +454,6 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
           )}
         </div>
 
-        {/* Bottom Navigation */}
-        <div className="p-4 space-y-1">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${collapsed ? 'p-3 h-10' : 'h-9 p-3'} hover:bg-accent text-sm text-body-dark font-normal`}
-            title={collapsed ? "Support" : undefined}
-            onClick={handleSupportClick}
-          >
-            <HelpCircle className={`w-4 h-4 ${(isMobile || !collapsed) ? 'mr-2' : ''}`} />
-            {(isMobile || !collapsed) && <span className="text-sm text-body-dark font-normal">Support</span>}
-          </Button>
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${collapsed ? 'p-3 h-10' : 'h-9 p-3'} hover:bg-accent text-sm text-body-dark font-normal`}
-            title={collapsed ? "Contact Us" : undefined}
-            onClick={() => window.open(
-              "https://teams.microsoft.com/l/channel/19%3AMgIrzDDHGuFgwnCDRjAveNIqeWlO74-q8uMcD7Y8hWw1%40thread.tacv2/Velox%20Support?groupId=e3bd59c5-a621-4e18-b49e-58f2184e0f30&tenantId=1f7c1878-7408-4f86-b429-cf17f96a717c",
-              "_blank",
-              "noopener,noreferrer",
-            )}
-          >
-            <MessageSquare className={`w-4 h-4 ${(isMobile || !collapsed) ? 'mr-2' : ''}`} />
-            {(isMobile || !collapsed) && <span className="text-sm text-body-dark font-normal">Contact Us</span>}
-          </Button>
-        </div>
       </div>
 
       {/* Support User Guide — Full-screen overlay */}

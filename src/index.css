@@ -3,6 +3,7 @@
 @import './styles/design-theme.css';
 @import './styles/code-intel.css';
 @import './styles/joseph.css';
+@import './styles/insights.css';
 
 @tailwind base;
 @tailwind components;

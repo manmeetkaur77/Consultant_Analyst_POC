@@ -3,6 +3,7 @@ import type { CoverageArea, CoveragePayload } from "@/services/consultingAgentAp
 interface CoverageIndicatorProps {
   coverage: CoveragePayload | null;
   sheetNum?: string;
+  headless?: boolean;
 }
 
 const AREAS: { key: CoverageArea; label: string }[] = [
@@ -16,8 +17,34 @@ const AREAS: { key: CoverageArea; label: string }[] = [
 export const CoverageIndicator = ({
   coverage,
   sheetNum = "01",
+  headless = false,
 }: CoverageIndicatorProps) => {
   const touched = coverage ? AREAS.filter((a) => coverage[a.key]?.touched).length : 0;
+
+  const Body = (
+    <div className="joseph-coverage">
+      {AREAS.map((a, i) => {
+        const item = coverage?.[a.key];
+        const isTouched = !!item?.touched;
+        return (
+          <div
+            key={a.key}
+            className={`joseph-cov ${isTouched ? "joseph-cov--touched" : ""}`}
+            title={item?.note || (isTouched ? "Touched" : "Not yet explored")}
+          >
+            <span className="joseph-cov__dot" />
+            <div className="joseph-cov__index">
+              {String(i + 1).padStart(2, "0")}
+            </div>
+            <div className="joseph-cov__label">{a.label}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  if (headless) return Body;
+
   return (
     <section className="joseph-sheet">
       <span className="joseph-sheet__num">{sheetNum}</span>
@@ -27,25 +54,7 @@ export const CoverageIndicator = ({
           {touched}/{AREAS.length}
         </span>
       </div>
-      <div className="joseph-coverage">
-        {AREAS.map((a, i) => {
-          const item = coverage?.[a.key];
-          const isTouched = !!item?.touched;
-          return (
-            <div
-              key={a.key}
-              className={`joseph-cov ${isTouched ? "joseph-cov--touched" : ""}`}
-              title={item?.note || (isTouched ? "Touched" : "Not yet explored")}
-            >
-              <span className="joseph-cov__dot" />
-              <div className="joseph-cov__index">
-                {String(i + 1).padStart(2, "0")}
-              </div>
-              <div className="joseph-cov__label">{a.label}</div>
-            </div>
-          );
-        })}
-      </div>
+      {Body}
     </section>
   );
 };
