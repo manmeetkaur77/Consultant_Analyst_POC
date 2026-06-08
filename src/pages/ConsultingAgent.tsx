@@ -28,6 +28,7 @@ import { KnowledgeBasePanel } from "@/components/consulting/KnowledgeBasePanel";
 import {
   buildVeloxHandoffPayload,
   exportReport,
+  rescoreRationale,
   saveToInsights,
   streamConsultingMessage,
   uploadDocument,
@@ -910,6 +911,28 @@ const ConsultingAgent = () => {
     handleSend(`Consume documents ${refs}`);
   };
 
+  // User edited a sub-score rationale in the scoring panel. Send it to the
+  // agent, which re-evaluates that score (and any others the new info bears
+  // on) and returns the full updated scores payload — axes and quadrant
+  // recompute on the server. Returns the agent's short note for the panel.
+  const handleRescore = async (
+    key: SubScoreKey,
+    rationale: string,
+  ): Promise<string | void> => {
+    if (!sessionId) {
+      toast.error("Start the conversation before editing scores.");
+      throw new Error("No active session");
+    }
+    if (isStreaming) {
+      toast.error("Wait for the current reply to finish, then edit the score.");
+      throw new Error("Streaming in progress");
+    }
+    const result = await rescoreRationale({ sessionId, subScore: key, rationale });
+    setScores(result.scores);
+    toast.success("Re-scored from your edit.");
+    return result.message;
+  };
+
   // Stash the current assessment to the org-wide Insights surface, then
   // route the user there with the new case pre-opened in the side sheet.
   const handleSaveToInsights = async () => {
@@ -1256,7 +1279,7 @@ const ConsultingAgent = () => {
                           onToggle={() => toggleSection("scores")}
                           accent="scores"
                         >
-                          <ScoringPanel scores={scores} headless />
+                          <ScoringPanel scores={scores} headless onRescore={handleRescore} />
                         </CollapsibleSection>
                       </div>
                     )}

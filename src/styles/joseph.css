@@ -311,6 +311,116 @@
 }
 .joseph-cov--touched .joseph-cov__dot { opacity: 1; }
 
+/* Coverage chip is a button — click to drill into its sub-sections */
+button.joseph-cov {
+  cursor: pointer;
+  width: 100%;
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.joseph-cov:hover { border-color: hsl(var(--primary) / 0.45); }
+.joseph-cov--open {
+  border-color: hsl(var(--primary) / 0.6);
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.18);
+}
+.joseph-cov__count {
+  margin-top: 0.2rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+}
+.joseph-cov--touched .joseph-cov__count { color: hsl(var(--primary)); }
+
+/* Drill-down detail panel shown below the strip for the open area */
+.joseph-cov-detail {
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid hsl(var(--primary) / 0.28);
+  border-radius: 10px;
+  background: hsl(var(--primary) / 0.04);
+  animation: joseph-desc-in 160ms ease;
+}
+.joseph-cov-detail__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+.joseph-cov-detail__title {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: hsl(var(--primary));
+}
+.joseph-cov-detail__count {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.joseph-cov-detail__note {
+  margin: 0 0 0.55rem;
+  font-size: 11px;
+  line-height: 1.5;
+  color: hsl(var(--foreground) / 0.8);
+}
+.joseph-cov-detail__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.joseph-cov-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+.joseph-cov-sub__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.joseph-cov-sub__dot {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid hsl(var(--muted-foreground) / 0.6);
+  background: transparent;
+}
+.joseph-cov-sub--found .joseph-cov-sub__dot {
+  background: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+}
+.joseph-cov-sub__label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: hsl(var(--foreground) / 0.82);
+}
+.joseph-cov-sub--found .joseph-cov-sub__label { color: hsl(var(--foreground)); }
+.joseph-cov-sub__finding {
+  margin: 0 0 0 0.9rem;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: hsl(var(--foreground) / 0.82);
+}
+.joseph-cov-sub__finding--empty {
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
 /* ── Scoring ledger (v2) ──────────────────────────────────────── */
 
 /* Per-variant accent — Impact = warm amber, Speed = cool sky. Each is
@@ -483,24 +593,311 @@
   color: hsl(var(--group-accent));
 }
 
-.joseph-score-row {
+/* Wrapper around a row + its expandable description */
+.joseph-score-rowblock {
   --row-accent: var(--primary);
+  border-bottom: 1px dotted hsl(var(--border) / 0.55);
+}
+.joseph-score-rowblock:last-child { border-bottom: 0; }
+.joseph-score-rowblock--impact { --row-accent: 32 95% 44%; }
+.joseph-score-rowblock--speed  { --row-accent: 199 89% 48%; }
+.joseph-score-rowblock--open {
+  background: hsl(var(--row-accent) / 0.04);
+  border-radius: 6px;
+}
+
+.joseph-score-row {
+  --row-accent: inherit;
   display: grid;
   grid-template-columns: auto 1fr auto auto auto;
   align-items: center;
   gap: 0.6rem;
+  width: 100%;
   padding: 0.42rem 0.15rem;
-  border-bottom: 1px dotted hsl(var(--border) / 0.55);
+  background: transparent;
+  border: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
   transition: background 150ms ease;
 }
-.joseph-score-row:last-child { border-bottom: 0; }
-.joseph-score-row:hover {
+.joseph-score-row--clickable { cursor: pointer; }
+.joseph-score-row--clickable:hover {
   background: hsl(var(--row-accent) / 0.04);
   border-radius: 6px;
 }
+.joseph-score-row--clickable:focus-visible {
+  outline: 2px solid hsl(var(--row-accent) / 0.5);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+.joseph-score-row:disabled { cursor: default; }
 .joseph-score-row--impact { --row-accent: 32 95% 44%; }
 .joseph-score-row--speed  { --row-accent: 199 89% 48%; }
 .joseph-score-row--empty { opacity: 0.65; }
+
+/* Caret affordance next to the label */
+.joseph-score-row__caret {
+  display: inline-block;
+  margin-left: 0.35rem;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: hsl(var(--row-accent));
+  opacity: 0.55;
+  transform: rotate(0deg);
+  transition: transform 180ms ease, opacity 150ms ease;
+}
+.joseph-score-row--clickable:hover .joseph-score-row__caret { opacity: 0.9; }
+.joseph-score-row__caret--open { transform: rotate(90deg); opacity: 1; }
+
+/* Expandable "why this score" description panel */
+.joseph-score-row__desc {
+  margin: 0 0.15rem 0.5rem 0.15rem;
+  padding: 0.55rem 0.7rem;
+  border-left: 2px solid hsl(var(--row-accent) / 0.55);
+  background: hsl(var(--row-accent) / 0.05);
+  border-radius: 0 6px 6px 0;
+  animation: joseph-desc-in 160ms ease;
+}
+@keyframes joseph-desc-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.joseph-score-row__desc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+.joseph-score-row__desc-eyebrow {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--row-accent));
+}
+.joseph-score-row__desc-meta {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+}
+.joseph-score-row__desc-body {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: hsl(var(--foreground) / 0.88);
+}
+.joseph-score-row__desc-body--empty {
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Two-part rationale: "Consumed" (inputs used) + "Why this level" (placement).
+   Each renders as its own card so the inputs and the judgement read as
+   visually distinct things. */
+.joseph-score-row__desc-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.joseph-score-row__desc-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 7px;
+  border: 1px solid hsl(var(--border) / 0.5);
+  background: hsl(var(--background) / 0.5);
+}
+/* Consumed = raw inputs → neutral, muted accent */
+.joseph-score-row__desc-section--consumed {
+  border-left: 2px solid hsl(var(--muted-foreground) / 0.45);
+}
+/* Why this level = the judgement → row-accent tint so it stands apart */
+.joseph-score-row__desc-section--ranking {
+  border-left: 2px solid hsl(var(--row-accent) / 0.7);
+  background: hsl(var(--row-accent) / 0.07);
+}
+.joseph-score-row__desc-section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.joseph-score-row__desc-section-dot {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: hsl(var(--muted-foreground) / 0.6);
+}
+.joseph-score-row__desc-section--ranking .joseph-score-row__desc-section-dot {
+  background: hsl(var(--row-accent));
+}
+.joseph-score-row__desc-section-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: hsl(var(--foreground) / 0.68);
+}
+.joseph-score-row__desc-section--ranking .joseph-score-row__desc-section-label {
+  color: hsl(var(--row-accent));
+}
+.joseph-score-row__desc-section-tag {
+  margin-left: auto;
+  padding: 0.08rem 0.36rem;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--muted-foreground) / 0.1);
+}
+.joseph-score-row__desc-section--ranking .joseph-score-row__desc-section-tag {
+  color: hsl(var(--row-accent));
+  background: hsl(var(--row-accent) / 0.13);
+}
+
+/* Agent's confirmation note after a re-score */
+.joseph-score-row__desc-note {
+  margin: 0.5rem 0 0;
+  padding-top: 0.45rem;
+  border-top: 1px dotted hsl(var(--border) / 0.6);
+  font-size: 11px;
+  line-height: 1.5;
+  color: hsl(var(--foreground) / 0.78);
+}
+.joseph-score-row__desc-note-tag {
+  display: inline-block;
+  margin-right: 0.4rem;
+  padding: 0.05rem 0.34rem;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: hsl(var(--row-accent));
+  background: hsl(var(--row-accent) / 0.12);
+}
+
+/* Foot row holding the Edit / Add affordance */
+.joseph-score-row__desc-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+/* Inline rationale editor */
+.joseph-score-row__edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.joseph-score-row__edit-label {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.45;
+  color: hsl(var(--muted-foreground));
+}
+.joseph-score-row__edit-label-tag {
+  display: inline-block;
+  margin-right: 0.4rem;
+  padding: 0.05rem 0.34rem;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--muted-foreground) / 0.12);
+}
+.joseph-score-row__edit-area {
+  width: 100%;
+  resize: vertical;
+  min-height: 64px;
+  padding: 0.5rem 0.6rem;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--row-accent) / 0.4);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.joseph-score-row__edit-area:focus {
+  border-color: hsl(var(--row-accent) / 0.7);
+  box-shadow: 0 0 0 2px hsl(var(--row-accent) / 0.16);
+}
+.joseph-score-row__edit-area:disabled { opacity: 0.6; }
+.joseph-score-row__edit-error {
+  margin: 0;
+  font-size: 10.5px;
+  color: hsl(var(--destructive, 0 72% 51%));
+}
+.joseph-score-row__edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.joseph-score-row__edit-hint {
+  flex: 1;
+  font-size: 9.5px;
+  line-height: 1.35;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Buttons */
+.joseph-score-row__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.6rem;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+.joseph-score-row__btn:disabled { opacity: 0.5; cursor: default; }
+.joseph-score-row__btn--edit {
+  color: hsl(var(--row-accent));
+  background: transparent;
+  border-color: hsl(var(--row-accent) / 0.35);
+}
+.joseph-score-row__btn--edit:hover:not(:disabled) {
+  background: hsl(var(--row-accent) / 0.08);
+  border-color: hsl(var(--row-accent) / 0.55);
+}
+.joseph-score-row__btn--ghost {
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border-color: hsl(var(--border));
+}
+.joseph-score-row__btn--ghost:hover:not(:disabled) {
+  background: hsl(var(--muted) / 0.5);
+}
+.joseph-score-row__btn--primary {
+  color: hsl(var(--primary-foreground, 0 0% 100%));
+  background: hsl(var(--row-accent));
+  border-color: hsl(var(--row-accent));
+}
+.joseph-score-row__btn--primary:hover:not(:disabled) {
+  background: hsl(var(--row-accent) / 0.88);
+}
 
 .joseph-score-row__idx {
   display: inline-flex;

@@ -15,7 +15,10 @@ export type SubScoreKey =
 export interface SubScorePayload {
   value: number | null;
   confidence: "low" | "medium" | "high" | null;
-  rationale: string | null;
+  /** What facts/inputs/documents the score was made from. */
+  consumed: string | null;
+  /** Why those facts map to this 1–5 band rather than the adjacent ones. */
+  ranking: string | null;
 }
 
 export interface ScoresPayload {
@@ -33,7 +36,12 @@ export type CoverageArea =
 
 export type CoveragePayload = Record<
   CoverageArea,
-  { touched: boolean; note: string | null }
+  {
+    touched: boolean;
+    note: string | null;
+    /** Sub-section slug → what Joseph gathered about it. */
+    findings: Record<string, string>;
+  }
 >;
 
 export interface CitationPayload {
@@ -203,6 +211,28 @@ export async function uploadDocument(
     throw new Error(`Upload failed: ${response.status} ${text.slice(0, 200)}`);
   }
   return (await response.json()) as UploadResult;
+}
+
+/**
+ * Submit a user-edited rationale for one sub-score. Joseph re-evaluates that
+ * sub-score (and any others the new information bears on) and returns the
+ * updated full scores payload, with axes and quadrant recomputed.
+ */
+export async function rescoreRationale(args: {
+  sessionId: string;
+  subScore: SubScoreKey;
+  rationale: string;
+}): Promise<{ scores: ScoresPayload; message: string }> {
+  const response = await apiPost(`${BASE}/rescore`, {
+    session_id: args.sessionId,
+    sub_score: args.subScore,
+    rationale: args.rationale,
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Rescore failed: ${response.status} ${text.slice(0, 200)}`);
+  }
+  return (await response.json()) as { scores: ScoresPayload; message: string };
 }
 
 export async function fetchSiblings(): Promise<Sibling[]> {

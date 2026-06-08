@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   X,
   FileText,
@@ -7,6 +7,7 @@ import {
   Calendar,
   User,
   ExternalLink,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -30,6 +31,71 @@ const SUB_SCORE_LABELS: { key: SubScoreKey; label: string; group: "impact" | "sp
   { key: "data_platform", label: "Data & platform",     group: "speed" },
   { key: "measurement",   label: "Measurement",         group: "speed" },
 ];
+
+const IMPACT_KEYS: SubScoreKey[] = ["financial", "productivity", "intent"];
+const SPEED_KEYS: SubScoreKey[] = ["complexity", "data_platform", "measurement"];
+
+const ZERO_SCORES = SUB_SCORE_LABELS.reduce(
+  (acc, s) => ({ ...acc, [s.key]: 0 }),
+  {} as Record<SubScoreKey, number>,
+);
+
+const avgOf = (keys: SubScoreKey[], scores: Record<SubScoreKey, number>): number => {
+  const vals = keys.map((k) => scores[k]).filter((v) => typeof v === "number" && v > 0);
+  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+};
+
+// Mirror of the backend quadrant logic (consulting_state.quadrant) so leadership
+// edits re-place the case live without a round-trip.
+const computeQuadrant = (impact: number, speed: number): string => {
+  const impactBand = impact >= 3.67 ? "high" : impact >= 2.34 ? "medium" : "low";
+  const speedBand = speed >= 3.67 ? "high" : speed >= 2.34 ? "medium" : "low";
+  if (impact >= 4.5 && speedBand === "low") return "Transformational Value";
+  if (impactBand === "high" && speedBand === "high") return "Quick Win";
+  if (impactBand === "high" && speedBand === "medium") return "Accelerator";
+  if ((impactBand === "medium" || impactBand === "low") && speedBand === "high")
+    return "Incremental Growth";
+  return "Defer";
+};
+
+const bandOf = (v: number): "high" | "mid" | "low" =>
+  v >= 3.67 ? "high" : v >= 2.34 ? "mid" : "low";
+
+// Dummy "agent" rationale per sub-score, keyed by band. Stands in for a real
+// model call — it reacts to the slider so leadership sees a defensible reason
+// for wherever they move the score.
+const RATIONALE: Record<SubScoreKey, Record<"high" | "mid" | "low", string>> = {
+  financial: {
+    high: "Modelled annual value lands in the $2M–$10M+ band — strong cost-out plus capacity creation, though the upper figures still lean on vendor math.",
+    mid: "Annual value sits in the $500k–$2M band on the stated savings — real, but not yet transformational.",
+    low: "Annual value reads below $500k or is still unquantified — hard to justify a top placement without a firmer number.",
+  },
+  productivity: {
+    high: "Touches a full function or multiple teams — a BU-wide process, so the productivity leverage is broad.",
+    mid: "Affects one team or a partial workflow — meaningful but contained.",
+    low: "Hits only a few people or a thin slice of their work — limited reach.",
+  },
+  intent: {
+    high: "Backed by a senior sponsor and a stated org or regulatory priority — clear top-down pull.",
+    mid: "A function-level priority with a director-grade sponsor — supported, not mandated.",
+    low: "Nice-to-have with no strong sponsor — easily deprioritised.",
+  },
+  complexity: {
+    high: "Mostly configuration with light change management — quick to stand up.",
+    mid: "A standard build with one or two integrations — a real but bounded project.",
+    low: "Novel work or heavy change management — a multi-quarter lift.",
+  },
+  data_platform: {
+    high: "Data is clean and accessible and the platform already supports it — little groundwork needed.",
+    mid: "Data is reachable with effort and the platform covers the core — some gaps to close.",
+    low: "Data is missing or fragmented, or the platform isn't ready — foundational work first.",
+  },
+  measurement: {
+    high: "Metric and baseline are already tracked — success is cleanly measurable, close to A/B-able.",
+    mid: "A metric exists but the baseline is noisy — measurable with care.",
+    low: "No clear metric or baseline yet — hard to prove the win.",
+  },
+};
 
 // Minimal markdown renderer — headings, lists, tables, bold, code.
 // Same parsing approach used in ConsultingAgent for chat bubbles. Inlined
@@ -240,6 +306,31 @@ const renderMarkdown = (md: string) => {
 export const ReportSideSheet = ({ assessment, onClose }: ReportSideSheetProps) => {
   const open = assessment !== null;
 
+  // Leadership-adjustable scores. Seeded from the agent's assessment; reset
+  // whenever a different case is opened. Local only — a "what-if" overlay, not
+  // persisted back to the stored assessment.
+  const [scores, setScores] = useState<Record<SubScoreKey, number>>(ZERO_SCORES);
+  useEffect(() => {
+    setScores({ ...ZERO_SCORES, ...(assessment?.sub_scores ?? {}) });
+  }, [assessment?.id]);
+
+  const liveImpact = useMemo(() => avgOf(IMPACT_KEYS, scores), [scores]);
+  const liveSpeed = useMemo(() => avgOf(SPEED_KEYS, scores), [scores]);
+  const liveQuadrant = useMemo(
+    () => computeQuadrant(liveImpact, liveSpeed),
+    [liveImpact, liveSpeed],
+  );
+  const adjusted = useMemo(
+    () =>
+      !!assessment &&
+      SUB_SCORE_LABELS.some(
+        ({ key }) => scores[key] !== (assessment.sub_scores?.[key] ?? 0),
+      ),
+    [scores, assessment],
+  );
+  const resetScores = () =>
+    setScores({ ...ZERO_SCORES, ...(assessment?.sub_scores ?? {}) });
+
   // Close on Escape
   useEffect(() => {
     if (!open) return;
@@ -328,42 +419,104 @@ export const ReportSideSheet = ({ assessment, onClose }: ReportSideSheetProps) =
             </div>
 
             <div className="insights-sheet__scroll">
-              {/* Scoring breakdown */}
+              {/* Scoring breakdown — leadership can drag each score to adjust */}
               <section className="insights-sheet__section">
                 <div className="insights-sheet__section-title">
                   <span className="insights-sheet__section-num">01</span>
                   Scoring breakdown
+                  {adjusted && <span className="insights-sheet__whatif">what-if</span>}
+                  {adjusted && (
+                    <button
+                      type="button"
+                      className="insights-sheet__reset"
+                      onClick={resetScores}
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Reset to Joseph&rsquo;s
+                    </button>
+                  )}
                 </div>
+
                 <div className="insights-sheet__axis-grid">
                   <div className="insights-sheet__axis">
                     <div className="insights-sheet__axis-label">Impact</div>
                     <div className="insights-sheet__axis-value">
-                      {assessment.axes.impact.toFixed(2)}
+                      {liveImpact.toFixed(2)}
                     </div>
+                    {adjusted &&
+                      Math.abs(liveImpact - assessment.axes.impact) >= 0.005 && (
+                        <div className="insights-sheet__axis-delta">
+                          was {assessment.axes.impact.toFixed(2)}
+                        </div>
+                      )}
                   </div>
                   <div className="insights-sheet__axis">
                     <div className="insights-sheet__axis-label">Speed</div>
                     <div className="insights-sheet__axis-value">
-                      {assessment.axes.speed.toFixed(2)}
+                      {liveSpeed.toFixed(2)}
                     </div>
+                    {adjusted &&
+                      Math.abs(liveSpeed - assessment.axes.speed) >= 0.005 && (
+                        <div className="insights-sheet__axis-delta">
+                          was {assessment.axes.speed.toFixed(2)}
+                        </div>
+                      )}
                   </div>
                 </div>
-                <div className="insights-sheet__bars">
-                  {SUB_SCORE_LABELS.map(({ key, label }) => {
-                    const raw = assessment.sub_scores?.[key] ?? 0;
-                    const pct = (raw / 5) * 100;
+
+                <div className="insights-sheet__placement">
+                  <span className="insights-sheet__placement-label">Placement</span>
+                  <ArrowRight className="w-3 h-3 opacity-50" />
+                  <QuadrantChip quadrant={liveQuadrant} size="sm" />
+                  {adjusted && liveQuadrant !== assessment.quadrant && (
+                    <span className="insights-sheet__placement-was">
+                      was {assessment.quadrant}
+                    </span>
+                  )}
+                </div>
+
+                <div className="insights-sheet__sliders">
+                  {SUB_SCORE_LABELS.map(({ key, label, group }) => {
+                    const v = scores[key] ?? 0;
+                    const orig = assessment.sub_scores?.[key] ?? 0;
+                    const changed = v !== orig;
+                    const fill = ((Math.min(5, Math.max(1, v)) - 1) / 4) * 100;
                     return (
-                      <div className="insights-sheet__bar" key={key}>
-                        <span className="insights-sheet__bar-label">{label}</span>
-                        <span className="insights-sheet__bar-track">
-                          <span
-                            className="insights-sheet__bar-fill"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </span>
-                        <span className="insights-sheet__bar-val">
-                          {raw.toFixed(1)}
-                        </span>
+                      <div
+                        className={`insights-score insights-score--${group}`}
+                        key={key}
+                      >
+                        <div className="insights-score__top">
+                          <span className="insights-score__label">{label}</span>
+                          <span className="insights-score__val">
+                            {v.toFixed(1)}
+                            <span className="insights-score__val-max">/5</span>
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min={1}
+                          max={5}
+                          step={0.5}
+                          value={v}
+                          onChange={(e) =>
+                            setScores((s) => ({
+                              ...s,
+                              [key]: parseFloat(e.target.value),
+                            }))
+                          }
+                          className="insights-score__slider"
+                          style={{ ["--fill" as any]: `${fill}%` }}
+                          aria-label={`${label} score`}
+                        />
+                        <p className="insights-score__rationale">
+                          {changed && (
+                            <span className="insights-score__override">
+                              Leadership override ·{" "}
+                            </span>
+                          )}
+                          {RATIONALE[key][bandOf(v)]}
+                        </p>
                       </div>
                     );
                   })}

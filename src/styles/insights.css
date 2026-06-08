@@ -1113,6 +1113,175 @@
   text-align: right;
 }
 
+/* ── Adjustable scoring (leadership sliders) ─────────────────── */
+
+/* "what-if" pill + reset, sit on the section title row */
+.insights-sheet__whatif {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.12);
+}
+.insights-sheet__reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;
+  padding: 0.22rem 0.55rem;
+  border-radius: 7px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  font-size: 10.5px;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+.insights-sheet__reset:hover {
+  border-color: hsl(var(--primary) / 0.5);
+  color: hsl(var(--primary));
+}
+
+.insights-sheet__axis-delta {
+  margin-top: 0.2rem;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+}
+
+/* Live placement row */
+.insights-sheet__placement {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.insights-sheet__placement-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+.insights-sheet__placement-was {
+  font-size: 10.5px;
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Slider rows */
+.insights-sheet__sliders {
+  display: grid;
+  gap: 1rem;
+}
+.insights-score {
+  --score-accent: var(--primary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+/* Impact = warm, Speed = cool, falling back to primary if vars absent */
+.insights-score--impact { --score-accent: 28 90% 55%; }
+.insights-score--speed { --score-accent: 202 85% 52%; }
+
+.insights-score__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.insights-score__label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+.insights-score__val {
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 800;
+  color: hsl(var(--score-accent));
+}
+.insights-score__val-max {
+  font-size: 10px;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  margin-left: 1px;
+}
+
+/* The range input, styled with a per-row accent and a filled track */
+.insights-score__slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+}
+.insights-score__slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    hsl(var(--score-accent)) var(--fill, 0%),
+    hsl(var(--muted) / 0.55) var(--fill, 0%)
+  );
+}
+.insights-score__slider::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: hsl(var(--muted) / 0.55);
+}
+.insights-score__slider::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: hsl(var(--score-accent));
+}
+.insights-score__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  margin-top: -4.5px;
+  border-radius: 50%;
+  background: hsl(var(--score-accent));
+  border: 2px solid hsl(var(--card));
+  box-shadow: 0 1px 5px -1px hsl(var(--foreground) / 0.4);
+  transition: transform 120ms ease;
+}
+.insights-score__slider:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+.insights-score__slider::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: hsl(var(--score-accent));
+  border: 2px solid hsl(var(--card));
+  box-shadow: 0 1px 5px -1px hsl(var(--foreground) / 0.4);
+}
+.insights-score__slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px hsl(var(--score-accent) / 0.3);
+}
+
+.insights-score__rationale {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+}
+.insights-score__override {
+  font-weight: 700;
+  color: hsl(var(--score-accent));
+}
+
 .insights-report {
   font-size: 13.5px;
   color: hsl(var(--foreground));
