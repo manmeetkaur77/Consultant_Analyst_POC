@@ -48,15 +48,16 @@ _lambda_client = None
 _s3_client = None
 
 
-def _lambda():
-    global _lambda_client
-    if _lambda_client is None:
-        from botocore.config import Config as BotoConfig
-        _lambda_client = boto3.client(
-            "lambda", region_name=AWS_REGION,
-            config=BotoConfig(read_timeout=300, connect_timeout=20, retries={"max_attempts": 1}),
-        )
-    return _lambda_client
+# LAMBDA DISABLED
+# def _lambda():
+#     global _lambda_client
+#     if _lambda_client is None:
+#         from botocore.config import Config as BotoConfig
+#         _lambda_client = boto3.client(
+#             "lambda", region_name=AWS_REGION,
+#             config=BotoConfig(read_timeout=300, connect_timeout=20, retries={"max_attempts": 1}),
+#         )
+#     return _lambda_client
 
 
 def _s3():
@@ -75,25 +76,9 @@ def _ensure_session_owned(session_id: str, user_id: str) -> Dict[str, Any]:
     return s
 
 
+# LAMBDA DISABLED
 def _invoke_sad_lambda(payload: Dict[str, Any]) -> Dict[str, Any]:
-    resp = _lambda().invoke(
-        FunctionName=SAD_LAMBDA_NAME,
-        InvocationType="RequestResponse",
-        Payload=json.dumps(payload).encode("utf-8"),
-    )
-    body_bytes = resp["Payload"].read()
-    if "FunctionError" in resp:
-        raise HTTPException(
-            status_code=502,
-            detail=f"SAD Lambda error: {body_bytes.decode('utf-8', errors='replace')[:500]}",
-        )
-    try:
-        outer = json.loads(body_bytes)
-        if "body" in outer and isinstance(outer["body"], str):
-            return json.loads(outer["body"])
-        return outer
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"SAD Lambda response parse error: {e}")
+    raise HTTPException(status_code=501, detail="SAD Lambda is disabled")
 
 
 # ============================================

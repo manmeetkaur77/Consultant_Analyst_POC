@@ -12,7 +12,7 @@ from html import unescape
 # Environment-specific LLM (local: direct Bedrock | VDI: Deluxe API Gateway)
 from environment import chat_completion
 
-from auth import verify_azure_token, require_module
+# SSO DISABLED - from auth import verify_azure_token
 from db_helper import (
     get_user_atlassian_credentials,
     create_or_update_user,
@@ -25,7 +25,8 @@ from services.lineage_service import record_lineage
 from utils.requirement_ids import normalize_requirement_id
 from utils.content_hashing import hash_text
 
-router = APIRouter(prefix="/api/jira", tags=["jira"], dependencies=[Depends(require_module("jira"))])
+# RBAC module check disabled for Sirius AI
+router = APIRouter(prefix="/api/jira", tags=["jira"])  # dependencies=[Depends(require_module("jira"))]
 logger = logging.getLogger(__name__)
 
 # LLM gateway configuration
@@ -36,22 +37,14 @@ BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "global.anthropic.claude-sonnet
 # AUTHENTICATION DEPENDENCY
 # ============================================
 
-def get_current_user(token_data: dict = Depends(verify_azure_token)):
-    """Get current user from Azure AD token.
-    Using def (not async def) so FastAPI runs this in a thread pool."""
-    user_id = token_data.get("oid") or token_data.get("sub")
-    email = token_data.get("preferred_username") or token_data.get("email") or token_data.get("upn")
-    name = token_data.get("name")
-
-    if not user_id or not email:
-        raise HTTPException(status_code=401, detail="Invalid token: missing user information")
-
+# SSO DISABLED - passthrough mock
+def get_current_user():
+    """SSO disabled - returns mock user for development"""
     try:
-        user = create_or_update_user(user_id, email, name)
-        return user
+        return create_or_update_user("sirius-ai-user", "sirius@siriusai.com", "Sirius AI User")
     except Exception as e:
         logger.error(f"Error creating/updating user: {e}")
-        raise HTTPException(status_code=500, detail="Failed to authenticate user")
+        return {"id": "sirius-ai-user", "email": "sirius@siriusai.com", "name": "Sirius AI User"}
 
 
 # ============================================

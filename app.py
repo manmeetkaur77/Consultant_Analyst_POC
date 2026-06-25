@@ -24,30 +24,29 @@ from typing import Optional, List
 import requests
 from datetime import datetime
 
-# Import API routers
-from routers.projects import router as projects_router
-from routers.sessions import router as sessions_router
-from routers.integrations import router as integrations_router
-from routers.integrations_internal import router as integrations_internal_router
-from routers.sync import router as sync_router
-from routers.jira_generation import router as jira_generation_router
-from routers.orchestration import router as orchestration_router
-from routers.orchestration_internal import router as orchestration_internal_router
-from routers.test_generation import router as test_generation_router
-from routers.brd_comparison import router as brd_comparison_router
-from routers.test_internal import router as test_internal_router
-from routers.design import router as design_router
-from routers.design_sessions import router as design_sessions_router
-from routers.sad import router as sad_router
-from routers.harness import router as harness_router
-from routers.pipeline_generator import router as pipeline_generator_router
-from routers.terraform_generator import router as terraform_generator_router
-from routers.figma import router as figma_router
+# Import API routers — POC MODE: only consulting agent active
+# from routers.projects import router as projects_router
+# from routers.sessions import router as sessions_router
+# from routers.integrations import router as integrations_router
+# from routers.integrations_internal import router as integrations_internal_router
+# from routers.sync import router as sync_router
+# from routers.jira_generation import router as jira_generation_router
+# from routers.orchestration import router as orchestration_router
+# from routers.orchestration_internal import router as orchestration_internal_router
+# from routers.test_generation import router as test_generation_router
+# from routers.brd_comparison import router as brd_comparison_router
+# from routers.test_internal import router as test_internal_router
+# from routers.design import router as design_router
+# from routers.design_sessions import router as design_sessions_router
+# from routers.sad import router as sad_router
+# from routers.harness import router as harness_router
+# from routers.pipeline_generator import router as pipeline_generator_router
+# from routers.terraform_generator import router as terraform_generator_router
+# from routers.figma import router as figma_router
 from routers.consulting_agent import router as consulting_agent_router
-# Import database helpers for session persistence
-from db_helper import save_project_brd_session, create_or_update_user, update_user_access_role
-# Environment-specific S3 implementation (local: plain boto3 | VDI: SSE-KMS)
-from environment import s3_put_object, get_s3_client  # noqa: F401
+# POC MODE: db_helper and S3 not needed for consulting agent
+# from db_helper import save_project_brd_session, create_or_update_user, update_user_access_role
+# from environment import s3_put_object, get_s3_client  # noqa: F401
 
 load_dotenv(override=True)
 
@@ -97,32 +96,32 @@ def _build_bmad_prompt(base_prompt: str, workflow_key: str = "create-prd") -> st
 # Add CORS middleware to allow frontend on localhost:8080
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080", "http://localhost:8081", "http://localhost:5173", "http://127.0.0.1:8080", "http://127.0.0.1:8081", "http://127.0.0.1:5173"],
+    allow_origins=["http://localhost:8080", "http://localhost:8081", "http://localhost:8082", "http://localhost:5173", "http://127.0.0.1:8080", "http://127.0.0.1:8081", "http://127.0.0.1:8082", "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*", "Authorization", "Content-Type"],
     expose_headers=["*"],
 )
 
-# Register API routers
-app.include_router(projects_router)
-app.include_router(sessions_router)
-app.include_router(integrations_router)
-app.include_router(integrations_internal_router)
-app.include_router(sync_router)
-app.include_router(orchestration_router)
-app.include_router(orchestration_internal_router)
-app.include_router(jira_generation_router)
-app.include_router(test_generation_router)
-app.include_router(brd_comparison_router)
-app.include_router(test_internal_router)
-app.include_router(design_router)
-app.include_router(design_sessions_router)
-app.include_router(sad_router)
-app.include_router(harness_router)
-app.include_router(pipeline_generator_router)
-app.include_router(terraform_generator_router)
-app.include_router(figma_router)
+# Register API routers — POC MODE: only consulting agent
+# app.include_router(projects_router)
+# app.include_router(sessions_router)
+# app.include_router(integrations_router)
+# app.include_router(integrations_internal_router)
+# app.include_router(sync_router)
+# app.include_router(orchestration_router)
+# app.include_router(orchestration_internal_router)
+# app.include_router(jira_generation_router)
+# app.include_router(test_generation_router)
+# app.include_router(brd_comparison_router)
+# app.include_router(test_internal_router)
+# app.include_router(design_router)
+# app.include_router(design_sessions_router)
+# app.include_router(sad_router)
+# app.include_router(harness_router)
+# app.include_router(pipeline_generator_router)
+# app.include_router(terraform_generator_router)
+# app.include_router(figma_router)
 app.include_router(consulting_agent_router, prefix="/api/consulting", tags=["consulting-agent"])
 
 # Add request logging middleware
@@ -169,25 +168,25 @@ print(f"\n[CONFIG] Agent ARN: {AGENT_ARN}")
 print(f"[CONFIG] Analyst Agent ARN: {ANALYST_AGENT_ARN}")
 print(f"[CONFIG] Region: {REGION}\n")
 
-# Azure AD Configuration
-AZURE_CLIENT_ID = os.getenv("AZURE_CLIENT_ID", "")
-AZURE_TENANT_ID = os.getenv("AZURE_TENANT_ID", "")
-AZURE_CLIENT_SECRET = os.getenv("AZURE_CLIENT_SECRET", "")
+# Azure AD Configuration - SSO DISABLED
+# AZURE_CLIENT_ID = os.getenv("AZURE_CLIENT_ID", "")
+# AZURE_TENANT_ID = os.getenv("AZURE_TENANT_ID", "")
+# AZURE_CLIENT_SECRET = os.getenv("AZURE_CLIENT_SECRET", "")
 
-# Import authentication functions
-from auth import (
-    verify_azure_token,
-    store_user_identity_in_agentcore,
-    get_user_identity_arn,
-    check_brd_access_via_agentcore,
-    grant_brd_access_via_agentcore,
-    revoke_brd_access_via_agentcore,
-    extract_user_groups,
-    compute_allowed_modules,
-    compute_access_role,
-    require_module,
-    GraphResolutionError,
-)
+# SSO DISABLED - auth imports commented out
+# from auth import (
+#     verify_azure_token,
+#     store_user_identity_in_agentcore,
+#     get_user_identity_arn,
+#     check_brd_access_via_agentcore,
+#     grant_brd_access_via_agentcore,
+#     revoke_brd_access_via_agentcore,
+#     extract_user_groups,
+#     compute_allowed_modules,
+#     compute_access_role,
+#     require_module,
+#     GraphResolutionError,
+# )
 
 # In-process cache: avoid hitting the DB on every authenticated request when
 # the role hasn't changed. Per-worker dict; eventual consistency across
@@ -239,16 +238,16 @@ def get_agent_core_client():
     )
     return boto3.client('bedrock-agentcore', region_name=REGION, config=config)
 
-def get_lambda_client():
-    """Get a fresh Lambda client with extended timeout for long-running Lambda functions"""
-    from botocore.config import Config
-    # Increase timeout to 15 minutes (900 seconds) - max Lambda execution time
-    config = Config(
-        read_timeout=900,
-        connect_timeout=60,
-        retries={'max_attempts': 0}  # Don't retry on timeout - Lambda is already processing
-    )
-    return boto3.client('lambda', region_name=REGION, config=config)
+# LAMBDA DISABLED
+# def get_lambda_client():
+#     """Get a fresh Lambda client with extended timeout for long-running Lambda functions"""
+#     from botocore.config import Config
+#     config = Config(
+#         read_timeout=900,
+#         connect_timeout=60,
+#         retries={'max_attempts': 0}
+#     )
+#     return boto3.client('lambda', region_name=REGION, config=config)
 
 def get_agentcore_identity_client():
     """Get AgentCore Identity client"""
@@ -265,79 +264,17 @@ def get_agentcore_identity_client():
 # -------------------------
 
 async def get_current_user(request: Request) -> dict:
-    """FastAPI dependency to get current authenticated user"""
-    # Get authorization header (case-insensitive)
-    authorization = request.headers.get("authorization") or request.headers.get("Authorization")
+    """FastAPI dependency - Auth disabled for Sirius AI (passthrough)"""
+    # SIRIUS AI: All authorization checks disabled
+    print(f"[AUTH] Sirius AI mode - Auth bypassed, returning mock user")
     
-    if not authorization:
-        print(f"[AUTH] Authorization header missing. Headers: {list(request.headers.keys())}")
-        raise HTTPException(status_code=401, detail="Authorization header missing")
-    
-    if not authorization.startswith("Bearer "):
-        print(f"[AUTH] Invalid authorization header format: {authorization[:20]}...")
-        raise HTTPException(status_code=401, detail="Invalid authorization header format")
-    
-    token = authorization.replace("Bearer ", "").strip()
-    print(f"[AUTH] Token received (first 20 chars): {token[:20]}...")
-    
-    try:
-        user_info = verify_azure_token(token)
-        print(f"[AUTH] Token verified successfully for user: {user_info.get('email') or user_info.get('preferred_username')}")
-    except HTTPException as e:
-        print(f"[AUTH] Token verification failed: {e.detail}")
-        raise
-    except Exception as e:
-        print(f"[AUTH] Unexpected error during token verification: {str(e)}")
-        raise HTTPException(status_code=401, detail=f"Token verification failed: {str(e)}")
-    
-    user_id = user_info.get("oid") or user_info.get("sub")
-    email = user_info.get("email") or user_info.get("preferred_username")
-    name = user_info.get("name")
-
-    print(f"[AUTH] User ID: {user_id}, Email: {email}")
-
-    try:
-        groups = extract_user_groups(user_info)
-    except GraphResolutionError as e:
-        # Overage user (>200 groups) whose Graph fallback failed. Do NOT
-        # silently return empty modules — that would render AccessDenied
-        # (a lie). 503 lets the frontend retry; transient Graph hiccups
-        # then self-heal without anyone seeing the permanent denied page.
-        print(f"[AUTH] Graph resolution failed for {email}: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail="Permission check temporarily unavailable — please retry in a moment.",
-        )
-    allowed_modules = compute_allowed_modules(groups)
-    access_role = compute_access_role(groups)
-    print(f"[AUTH] Groups: {groups}, Allowed modules: {allowed_modules}, access_role: {access_role}")
-
-    # Persist access_role to users.access_role (cached per worker so we only
-    # write when the role actually changes for this user).
-    # The function returns False if the write didn't actually land (e.g.
-    # brand-new user whose row hasn't been INSERTed yet by
-    # create_or_update_user); in that case we deliberately DON'T cache, so the
-    # next request retries the UPSERT once the row exists.
-    if user_id and _LAST_ACCESS_ROLE_CACHE.get(user_id) != access_role:
-        try:
-            if update_user_access_role(user_id, access_role):
-                _LAST_ACCESS_ROLE_CACHE[user_id] = access_role
-        except Exception as e:
-            print(f"[AUTH] Warning: Failed to persist access_role for {user_id}: {e}")
-
-    # Store user identity in AgentCore if not exists
-    try:
-        store_user_identity_in_agentcore(user_id=user_id, email=email, name=name or "")
-    except Exception as e:
-        print(f"[AUTH] Warning: Failed to store user identity in AgentCore: {e}")
-
     return {
-        "user_id": user_id,
-        "email": email,
-        "name": name,
-        "token": token,
-        "groups": groups,
-        "allowed_modules": allowed_modules,
+        "user_id": "sirius-ai-user",
+        "email": "sirius@siriusai.com",
+        "name": "Sirius AI User",
+        "token": "mock-token",
+        "groups": [],
+        "allowed_modules": ["all"],
     }
 
 def render_brd_json_to_text(brd_data: dict) -> str:
@@ -762,7 +699,7 @@ def extract_text(file_content, filename):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 @app.post("/generate")
 async def generate_brd(
@@ -880,26 +817,26 @@ async def generate_brd(
                         if brd_id:
                             try:
                                 print(f"[APP] Creating AgentCore Memory session for BRD {brd_id}")
-                                # Call Lambda to create session
-                                lambda_client = get_lambda_client()
-                                session_payload = {
-                                    'action': 'create_session',
-                                    'brd_id': brd_id,
-                                    'template': template_text[:500],  # Truncate for session creation
-                                    'transcript': transcript_text[:500]  # Truncate for session creation
-                                }
-                                session_response = lambda_client.invoke(
-                                    FunctionName=LAMBDA_BRD_CHAT,
-                                    InvocationType='RequestResponse',
-                                    Payload=json.dumps(session_payload)
-                                )
-                                session_result = json.loads(session_response['Payload'].read())
-                                if session_result.get('statusCode') == 200:
-                                    session_body = json.loads(session_result.get('body', '{}'))
-                                    session_id = session_body.get('session_id')
-                                    print(f"[APP] ✅ Created session: {session_id}")
-                                else:
-                                    print(f"[APP] ⚠️  Session creation failed, will auto-create on first chat")
+                                # LAMBDA DISABLED - session creation via Lambda commented out
+                                # lambda_client = get_lambda_client()
+                                # session_payload = {
+                                #     'action': 'create_session',
+                                #     'brd_id': brd_id,
+                                #     'template': template_text[:500],
+                                #     'transcript': transcript_text[:500]
+                                # }
+                                # session_response = lambda_client.invoke(
+                                #     FunctionName=LAMBDA_BRD_CHAT,
+                                #     InvocationType='RequestResponse',
+                                #     Payload=json.dumps(session_payload)
+                                # )
+                                # session_result = json.loads(session_response['Payload'].read())
+                                # if session_result.get('statusCode') == 200:
+                                #     session_body = json.loads(session_result.get('body', '{}'))
+                                #     session_id = session_body.get('session_id')
+                                #     print(f"[APP] ✅ Created session: {session_id}")
+                                # else:
+                                #     print(f"[APP] ⚠️  Session creation failed, will auto-create on first chat")
                             except Exception as e:
                                 print(f"[APP] ⚠️  Failed to create session: {e}, will auto-create on first chat")
                         
@@ -1151,25 +1088,26 @@ async def generate_brd_from_s3(
                         if brd_id:
                             try:
                                 print(f"[APP] Creating AgentCore Memory session for BRD {brd_id}")
-                                lambda_client = get_lambda_client()
-                                session_payload = {
-                                    'action': 'create_session',
-                                    'brd_id': brd_id,
-                                    'template': template_text[:500],
-                                    'transcript': transcript_text[:500]
-                                }
-                                session_response = lambda_client.invoke(
-                                    FunctionName=LAMBDA_BRD_CHAT,
-                                    InvocationType='RequestResponse',
-                                    Payload=json.dumps(session_payload)
-                                )
-                                session_result = json.loads(session_response['Payload'].read())
-                                if session_result.get('statusCode') == 200:
-                                    session_body = json.loads(session_result.get('body', '{}'))
-                                    session_id_memory = session_body.get('session_id')
-                                    print(f"[APP] ✅ Created session: {session_id_memory}")
-                                else:
-                                    print(f"[APP] ⚠️  Session creation failed, will auto-create on first chat")
+                                # LAMBDA DISABLED - session creation via Lambda commented out
+                                # lambda_client = get_lambda_client()
+                                # session_payload = {
+                                #     'action': 'create_session',
+                                #     'brd_id': brd_id,
+                                #     'template': template_text[:500],
+                                #     'transcript': transcript_text[:500]
+                                # }
+                                # session_response = lambda_client.invoke(
+                                #     FunctionName=LAMBDA_BRD_CHAT,
+                                #     InvocationType='RequestResponse',
+                                #     Payload=json.dumps(session_payload)
+                                # )
+                                # session_result = json.loads(session_response['Payload'].read())
+                                # if session_result.get('statusCode') == 200:
+                                #     session_body = json.loads(session_result.get('body', '{}'))
+                                #     session_id_memory = session_body.get('session_id')
+                                #     print(f"[APP] ✅ Created session: {session_id_memory}")
+                                # else:
+                                #     print(f"[APP] ⚠️  Session creation failed, will auto-create on first chat")
                             except Exception as e:
                                 print(f"[APP] ⚠️  Failed to create session: {e}, will auto-create on first chat")
                         
@@ -1490,42 +1428,26 @@ async def warm_analyst_lambdas(current_user: dict = Depends(get_current_user)):
     """
     import asyncio
 
-    LAMBDA_REQ = DEFAULT_LAMBDA_REQUIREMENTS_GATHERING_ARN
-    LAMBDA_BRD = DEFAULT_LAMBDA_BRD_FROM_HISTORY_ARN
-
-    ping_payload = json.dumps({"action": "ping", "warm": True}).encode("utf-8")
-
-    def _invoke_lambda(function_name: str) -> dict:
-        try:
-            from botocore.config import Config
-            config = Config(read_timeout=10, connect_timeout=5, retries={"max_attempts": 0})
-            lc = boto3.client("lambda", region_name=os.getenv("AWS_REGION", "us-east-1"), config=config)
-            resp = lc.invoke(
-                FunctionName=function_name,
-                InvocationType="RequestResponse",
-                Payload=ping_payload
-            )
-            status = resp.get("StatusCode", 0)
-            print(f"[WARM-UP] ✅ {function_name.split(':')[-1]} → HTTP {status}", flush=True)
-            return {"function": function_name.split(":")[-1], "status": status, "warmed": True}
-        except Exception as e:
-            print(f"[WARM-UP] ⚠️  {function_name.split(':')[-1]} ping failed (non-fatal): {e}", flush=True)
-            return {"function": function_name.split(":")[-1], "status": "error", "warmed": False}
-
-    print("[WARM-UP] Warming Lambda containers in parallel...", flush=True)
-
-    loop = asyncio.get_event_loop()
-    results = await asyncio.gather(
-        loop.run_in_executor(None, _invoke_lambda, LAMBDA_REQ),
-        loop.run_in_executor(None, _invoke_lambda, LAMBDA_BRD),
-    )
-
-    print(f"[WARM-UP] Done. Results: {results}", flush=True)
-
-    return JSONResponse(content={
-        "status": "warmed",
-        "lambdas": list(results)
-    })
+    # LAMBDA DISABLED - warm-up logic commented out
+    # LAMBDA_REQ = DEFAULT_LAMBDA_REQUIREMENTS_GATHERING_ARN
+    # LAMBDA_BRD = DEFAULT_LAMBDA_BRD_FROM_HISTORY_ARN
+    # ping_payload = json.dumps({"action": "ping", "warm": True}).encode("utf-8")
+    # def _invoke_lambda(function_name: str) -> dict:
+    #     try:
+    #         from botocore.config import Config
+    #         config = Config(read_timeout=10, connect_timeout=5, retries={"max_attempts": 0})
+    #         lc = boto3.client("lambda", region_name=os.getenv("AWS_REGION", "us-east-1"), config=config)
+    #         resp = lc.invoke(FunctionName=function_name, InvocationType="RequestResponse", Payload=ping_payload)
+    #         status = resp.get("StatusCode", 0)
+    #         return {"function": function_name.split(":")[-1], "status": status, "warmed": True}
+    #     except Exception as e:
+    #         return {"function": function_name.split(":")[-1], "status": "error", "warmed": False}
+    # loop = asyncio.get_event_loop()
+    # results = await asyncio.gather(
+    #     loop.run_in_executor(None, _invoke_lambda, LAMBDA_REQ),
+    #     loop.run_in_executor(None, _invoke_lambda, LAMBDA_BRD),
+    # )
+    return JSONResponse(content={"status": "warmed", "lambdas": [], "note": "Lambda disabled"})
 
 
 @app.post("/api/analyst-chat")
@@ -2003,42 +1925,20 @@ async def analyst_chat_stream(
         try:
             print(f"[ANALYST-STREAM] Direct Lambda call: session={runtime_session_id}, message={formatted_message[:100]}...")
 
-            # Call requirements_gathering Lambda directly in a thread
-            def _call_lambda():
-                from botocore.config import Config
-                config = Config(
-                    read_timeout=900,
-                    connect_timeout=60,
-                    retries={'max_attempts': 0}
-                )
-                lambda_client = boto3.client('lambda', region_name=os.getenv('AWS_REGION', 'us-east-1'), config=config)
-
-                payload = {
-                    'session_id': runtime_session_id,
-                    'user_message': formatted_message,
-                    'user_id': current_user.get('user_id'),  # for token usage tracking
-                }
-
-                response = lambda_client.invoke(
-                    FunctionName=LAMBDA_REQ_ARN,
-                    InvocationType='RequestResponse',
-                    Payload=json.dumps(payload)
-                )
-
-                response_payload = json.loads(response['Payload'].read())
-
-                if 'FunctionError' in response:
-                    error_msg = response_payload.get('errorMessage', 'Unknown Lambda error')
-                    raise Exception(f"Lambda error: {error_msg}")
-
-                return response_payload
-
-            try:
-                result = await asyncio.get_running_loop().run_in_executor(None, _call_lambda)
-            except Exception as invoke_error:
-                print(f"[ANALYST-STREAM] Lambda invoke error: {invoke_error}")
-                yield f"data: {json.dumps({'type': 'error', 'message': str(invoke_error)})}\n\n"
-                return
+            # LAMBDA DISABLED - analyst stream Lambda call commented out
+            # def _call_lambda():
+            #     from botocore.config import Config
+            #     config = Config(read_timeout=900, connect_timeout=60, retries={'max_attempts': 0})
+            #     lambda_client = boto3.client('lambda', region_name=os.getenv('AWS_REGION', 'us-east-1'), config=config)
+            #     payload = {'session_id': runtime_session_id, 'user_message': formatted_message, 'user_id': current_user.get('user_id')}
+            #     response = lambda_client.invoke(FunctionName=LAMBDA_REQ_ARN, InvocationType='RequestResponse', Payload=json.dumps(payload))
+            #     response_payload = json.loads(response['Payload'].read())
+            #     if 'FunctionError' in response:
+            #         raise Exception(f"Lambda error: {response_payload.get('errorMessage', 'Unknown Lambda error')}")
+            #     return response_payload
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Lambda analyst stream is disabled'})}\n\n"
+            return
+            result = None  # unreachable - kept for reference
 
             print(f"[ANALYST-STREAM] Lambda response received: {type(result)}")
 
@@ -2302,103 +2202,51 @@ async def analyst_generate_brd(
             
             print(f"[ANALYST-GENERATE-BRD] Conversation transcript length: {len(conversation_text)} chars")
             
-            # Invoke brd_from_history_lambda
-            lambda_client = get_lambda_client()
-            lambda_function_name = LAMBDA_BRD_FROM_HISTORY
-            
-            print(f"[ANALYST-GENERATE-BRD] Invoking Lambda: {lambda_function_name}")
-            
-            # Generate BRD ID
-            brd_id = str(uuid.uuid4())
-            
-            lambda_payload = {
-                "session_id": session_id,
-                "brd_id": brd_id,
-                "user_id": current_user.get("user_id"),  # for token usage tracking
-            }
-            
-            lambda_response = lambda_client.invoke(
-                FunctionName=lambda_function_name,
-                InvocationType="RequestResponse",
-                Payload=json.dumps(lambda_payload)
-            )
-            
-            # Parse Lambda response
-            response_payload = json.loads(lambda_response['Payload'].read())
-            
-            print(f"[ANALYST-GENERATE-BRD] Lambda response keys: {list(response_payload.keys()) if isinstance(response_payload, dict) else 'Not a dict'}")
-            
-            # Lambda returns: {'statusCode': 200, 'body': '{"brd_id": "...", ...}'}
-            # Need to parse the 'body' field if it exists
-            lambda_status_code = lambda_response['StatusCode']
-            if isinstance(response_payload, dict) and 'statusCode' in response_payload:
-                lambda_status_code = response_payload['statusCode']
-            
-            if lambda_status_code >= 400:
-                error_message = 'Unknown error'
-                if isinstance(response_payload, dict):
-                    # Check if error is in 'body' (JSON string) or directly in response
-                    if 'body' in response_payload:
-                        try:
-                            body_data = json.loads(response_payload['body'])
-                            error_message = body_data.get('error', body_data.get('message', 'Unknown error'))
-                        except:
-                            error_message = response_payload.get('errorMessage', str(response_payload.get('body', 'Unknown error')))
-                    else:
-                        error_message = response_payload.get('errorMessage', response_payload.get('error', 'Unknown error'))
-                print(f"[ANALYST-GENERATE-BRD] ❌ Lambda error: {error_message}")
-                return JSONResponse(status_code=500, content={
-                    "error": "BRD generation failed",
-                    "message": f"Failed to generate BRD: {error_message}"
-                })
-            
-            # Extract brd_id from response
-            # Lambda returns: {'statusCode': 200, 'body': '{"brd_id": "...", ...}'}
-            brd_id_from_response = None
-            if isinstance(response_payload, dict):
-                # First check if brd_id is directly in response_payload
-                if 'brd_id' in response_payload:
-                    brd_id_from_response = response_payload['brd_id']
-                # Otherwise, parse the 'body' field
-                elif 'body' in response_payload:
-                    try:
-                        body_data = json.loads(response_payload['body'])
-                        brd_id_from_response = body_data.get('brd_id')
-                        print(f"[ANALYST-GENERATE-BRD] ✅ Extracted brd_id from body: {brd_id_from_response}")
-                    except json.JSONDecodeError as e:
-                        print(f"[ANALYST-GENERATE-BRD] ⚠️ Failed to parse body as JSON: {e}")
-                        print(f"[ANALYST-GENERATE-BRD] Body content: {response_payload['body'][:200]}")
-            
-            if brd_id_from_response:
-                brd_id = brd_id_from_response
-                print(f"[ANALYST-GENERATE-BRD] ✅ BRD generated successfully: {brd_id}")
-                try:
-                    from db_helper import track_event
-                    track_event(
-                        current_user["user_id"],
-                        module="brd",
-                        event_type="analyst_agent_brd_generated",
-                        metadata={
-                            "session_id": session_id,
-                            "brd_id": brd_id,
-                            "duration_ms": int((time.time() - t0) * 1000),
-                        },
-                    )
-                except Exception as _track_err:
-                    print(f"[ANALYST-GENERATE-BRD] track_event failed (non-fatal): {_track_err}")
-                return JSONResponse(content={
-                    "result": f"BRD generated successfully",
-                    "brd_id": brd_id,
-                    "session_id": session_id,
-                    "message": "BRD has been generated and saved to S3"
-                })
-            else:
-                print(f"[ANALYST-GENERATE-BRD] ⚠️ Lambda response missing brd_id")
-                print(f"[ANALYST-GENERATE-BRD] Full response: {response_payload}")
-                return JSONResponse(status_code=500, content={
-                    "error": "BRD generation incomplete",
-                    "message": "BRD generation completed but response format was unexpected"
-                })
+            # LAMBDA DISABLED - brd_from_history Lambda invocation commented out
+            # lambda_client = get_lambda_client()
+            # lambda_function_name = LAMBDA_BRD_FROM_HISTORY
+            # brd_id = str(uuid.uuid4())
+            # lambda_payload = {"session_id": session_id, "brd_id": brd_id, "user_id": current_user.get("user_id")}
+            # lambda_response = lambda_client.invoke(FunctionName=lambda_function_name, InvocationType="RequestResponse", Payload=json.dumps(lambda_payload))
+            # response_payload = json.loads(lambda_response['Payload'].read())
+            # lambda_status_code = lambda_response['StatusCode']
+            # if isinstance(response_payload, dict) and 'statusCode' in response_payload:
+            #     lambda_status_code = response_payload['statusCode']
+            # if lambda_status_code >= 400:
+            #     error_message = 'Unknown error'
+            #     if isinstance(response_payload, dict):
+            #         if 'body' in response_payload:
+            #             try:
+            #                 body_data = json.loads(response_payload['body'])
+            #                 error_message = body_data.get('error', body_data.get('message', 'Unknown error'))
+            #             except:
+            #                 error_message = response_payload.get('errorMessage', str(response_payload.get('body', 'Unknown error')))
+            #         else:
+            #             error_message = response_payload.get('errorMessage', response_payload.get('error', 'Unknown error'))
+            #     print(f"[ANALYST-GENERATE-BRD] ❌ Lambda error: {error_message}")
+            #     return JSONResponse(status_code=500, content={"error": "BRD generation failed"})
+            #
+            # # Extract brd_id from response
+            # brd_id_from_response = None
+            # if isinstance(response_payload, dict):
+            #     if 'brd_id' in response_payload:
+            #         brd_id_from_response = response_payload['brd_id']
+            #     elif 'body' in response_payload:
+            #         try:
+            #             body_data = json.loads(response_payload['body'])
+            #             brd_id_from_response = body_data.get('brd_id')
+            #         except json.JSONDecodeError:
+            #             pass
+            # if brd_id_from_response:
+            #     return JSONResponse(content={"result": "BRD generated", "brd_id": brd_id_from_response})
+            # else:
+            #     return JSONResponse(status_code=500, content={"error": "BRD generation incomplete"})
+
+            # LAMBDA DISABLED
+            return JSONResponse(status_code=501, content={
+                "error": "BRD from history is disabled",
+                "message": "Lambda BRD generation is disabled in this deployment"
+            })
                 
         except Exception as memory_error:
             print(f"[ANALYST-GENERATE-BRD] ❌ Error accessing AgentCore Memory: {memory_error}")
@@ -2563,103 +2411,51 @@ async def analyst_generate_brd(
             
             print(f"[ANALYST-GENERATE-BRD] Conversation transcript length: {len(conversation_text)} chars")
             
-            # Invoke brd_from_history_lambda
-            lambda_client = get_lambda_client()
-            lambda_function_name = LAMBDA_BRD_FROM_HISTORY
-            
-            print(f"[ANALYST-GENERATE-BRD] Invoking Lambda: {lambda_function_name}")
-            
-            # Generate BRD ID
-            brd_id = str(uuid.uuid4())
-            
-            lambda_payload = {
-                "session_id": session_id,
-                "brd_id": brd_id,
-                "user_id": current_user.get("user_id"),  # for token usage tracking
-            }
-            
-            lambda_response = lambda_client.invoke(
-                FunctionName=lambda_function_name,
-                InvocationType="RequestResponse",
-                Payload=json.dumps(lambda_payload)
-            )
-            
-            # Parse Lambda response
-            response_payload = json.loads(lambda_response['Payload'].read())
-            
-            print(f"[ANALYST-GENERATE-BRD] Lambda response keys: {list(response_payload.keys()) if isinstance(response_payload, dict) else 'Not a dict'}")
-            
-            # Lambda returns: {'statusCode': 200, 'body': '{"brd_id": "...", ...}'}
-            # Need to parse the 'body' field if it exists
-            lambda_status_code = lambda_response['StatusCode']
-            if isinstance(response_payload, dict) and 'statusCode' in response_payload:
-                lambda_status_code = response_payload['statusCode']
-            
-            if lambda_status_code >= 400:
-                error_message = 'Unknown error'
-                if isinstance(response_payload, dict):
-                    # Check if error is in 'body' (JSON string) or directly in response
-                    if 'body' in response_payload:
-                        try:
-                            body_data = json.loads(response_payload['body'])
-                            error_message = body_data.get('error', body_data.get('message', 'Unknown error'))
-                        except:
-                            error_message = response_payload.get('errorMessage', str(response_payload.get('body', 'Unknown error')))
-                    else:
-                        error_message = response_payload.get('errorMessage', response_payload.get('error', 'Unknown error'))
-                print(f"[ANALYST-GENERATE-BRD] ❌ Lambda error: {error_message}")
-                return JSONResponse(status_code=500, content={
-                    "error": "BRD generation failed",
-                    "message": f"Failed to generate BRD: {error_message}"
-                })
-            
-            # Extract brd_id from response
-            # Lambda returns: {'statusCode': 200, 'body': '{"brd_id": "...", ...}'}
-            brd_id_from_response = None
-            if isinstance(response_payload, dict):
-                # First check if brd_id is directly in response_payload
-                if 'brd_id' in response_payload:
-                    brd_id_from_response = response_payload['brd_id']
-                # Otherwise, parse the 'body' field
-                elif 'body' in response_payload:
-                    try:
-                        body_data = json.loads(response_payload['body'])
-                        brd_id_from_response = body_data.get('brd_id')
-                        print(f"[ANALYST-GENERATE-BRD] ✅ Extracted brd_id from body: {brd_id_from_response}")
-                    except json.JSONDecodeError as e:
-                        print(f"[ANALYST-GENERATE-BRD] ⚠️ Failed to parse body as JSON: {e}")
-                        print(f"[ANALYST-GENERATE-BRD] Body content: {response_payload['body'][:200]}")
-            
-            if brd_id_from_response:
-                brd_id = brd_id_from_response
-                print(f"[ANALYST-GENERATE-BRD] ✅ BRD generated successfully: {brd_id}")
-                try:
-                    from db_helper import track_event
-                    track_event(
-                        current_user["user_id"],
-                        module="brd",
-                        event_type="analyst_agent_brd_generated",
-                        metadata={
-                            "session_id": session_id,
-                            "brd_id": brd_id,
-                            "duration_ms": int((time.time() - t0) * 1000),
-                        },
-                    )
-                except Exception as _track_err:
-                    print(f"[ANALYST-GENERATE-BRD] track_event failed (non-fatal): {_track_err}")
-                return JSONResponse(content={
-                    "result": f"BRD generated successfully",
-                    "brd_id": brd_id,
-                    "session_id": session_id,
-                    "message": "BRD has been generated and saved to S3"
-                })
-            else:
-                print(f"[ANALYST-GENERATE-BRD] ⚠️ Lambda response missing brd_id")
-                print(f"[ANALYST-GENERATE-BRD] Full response: {response_payload}")
-                return JSONResponse(status_code=500, content={
-                    "error": "BRD generation incomplete",
-                    "message": "BRD generation completed but response format was unexpected"
-                })
+            # LAMBDA DISABLED - brd_from_history Lambda invocation commented out
+            # lambda_client = get_lambda_client()
+            # lambda_function_name = LAMBDA_BRD_FROM_HISTORY
+            # brd_id = str(uuid.uuid4())
+            # lambda_payload = {"session_id": session_id, "brd_id": brd_id, "user_id": current_user.get("user_id")}
+            # lambda_response = lambda_client.invoke(FunctionName=lambda_function_name, InvocationType="RequestResponse", Payload=json.dumps(lambda_payload))
+            # response_payload = json.loads(lambda_response['Payload'].read())
+            # lambda_status_code = lambda_response['StatusCode']
+            # if isinstance(response_payload, dict) and 'statusCode' in response_payload:
+            #     lambda_status_code = response_payload['statusCode']
+            # if lambda_status_code >= 400:
+            #     error_message = 'Unknown error'
+            #     if isinstance(response_payload, dict):
+            #         if 'body' in response_payload:
+            #             try:
+            #                 body_data = json.loads(response_payload['body'])
+            #                 error_message = body_data.get('error', body_data.get('message', 'Unknown error'))
+            #             except:
+            #                 error_message = response_payload.get('errorMessage', str(response_payload.get('body', 'Unknown error')))
+            #         else:
+            #             error_message = response_payload.get('errorMessage', response_payload.get('error', 'Unknown error'))
+            #     print(f"[ANALYST-GENERATE-BRD] ❌ Lambda error: {error_message}")
+            #     return JSONResponse(status_code=500, content={"error": "BRD generation failed"})
+            #
+            # # Extract brd_id from response
+            # brd_id_from_response = None
+            # if isinstance(response_payload, dict):
+            #     if 'brd_id' in response_payload:
+            #         brd_id_from_response = response_payload['brd_id']
+            #     elif 'body' in response_payload:
+            #         try:
+            #             body_data = json.loads(response_payload['body'])
+            #             brd_id_from_response = body_data.get('brd_id')
+            #         except json.JSONDecodeError:
+            #             pass
+            # if brd_id_from_response:
+            #     return JSONResponse(content={"result": "BRD generated", "brd_id": brd_id_from_response})
+            # else:
+            #     return JSONResponse(status_code=500, content={"error": "BRD generation incomplete"})
+
+            # LAMBDA DISABLED
+            return JSONResponse(status_code=501, content={
+                "error": "BRD from history is disabled",
+                "message": "Lambda BRD generation is disabled in this deployment"
+            })
                 
         except Exception as memory_error:
             print(f"[ANALYST-GENERATE-BRD] ❌ Error accessing AgentCore Memory: {memory_error}")
@@ -2793,21 +2589,13 @@ async def analyst_generate_brd(
             
             print(f"[ANALYST-GENERATE-BRD] Conversation transcript length: {len(conversation_text)} chars")
             
-            # Invoke brd_from_history_lambda
-            lambda_client = get_lambda_client()
-            lambda_function_name = LAMBDA_BRD_FROM_HISTORY
-            
-            print(f"[ANALYST-GENERATE-BRD] Invoking Lambda: {lambda_function_name}")
-            
-            # Generate BRD ID
-            brd_id = str(uuid.uuid4())
-            
-            lambda_payload = {
-                "session_id": session_id,
-                "brd_id": brd_id,
-                "user_id": current_user.get("user_id"),  # for token usage tracking
-            }
-            
+            # LAMBDA DISABLED - brd_from_history Lambda invocation commented out
+            # lambda_client = get_lambda_client()
+            # lambda_function_name = LAMBDA_BRD_FROM_HISTORY
+            # brd_id = str(uuid.uuid4())
+            # lambda_payload = {"session_id": session_id, "brd_id": brd_id, "user_id": current_user.get("user_id")}
+            raise Exception("Lambda BRD generation is disabled")
+
         except Exception as e:
             print(f"[ANALYST-GENERATE-BRD] Error retrieving history: {e}")
             import traceback
@@ -2834,124 +2622,16 @@ async def analyst_generate_brd(
         s3_bucket = S3_BUCKET_NAME
         template_s3_key = "templates/Deluxe_BRD_Template.docx"
         
-        # Get Lambda client with increased timeout for long-running BRD generation
-        from botocore.config import Config
-        lambda_config = Config(
-            read_timeout=900,  # 15 minutes - max Lambda execution time
-            connect_timeout=10,
-            retries={'max_attempts': 0}  # Don't retry on timeout
-        )
-        lambda_client = boto3.client('lambda', region_name=REGION, config=lambda_config)
-        # Use lambda_brd_from_history for analyst agent BRD generation
-        lambda_function_name = LAMBDA_BRD_FROM_HISTORY
-        
-        # Prepare Lambda payload for lambda_brd_from_history
-        # This Lambda expects: conversation_history (list of messages)
-        lambda_payload = {
-            "conversation_history": messages,  # Pass messages array directly
-            "brd_id": brd_id,
-            "session_id": session_id,
-            "user_id": current_user.get("user_id"),  # for token usage tracking
-        }
-        
-        print(f"[ANALYST-GENERATE-BRD] Calling Lambda: {lambda_function_name}")
-        print(f"[ANALYST-GENERATE-BRD] BRD ID: {brd_id}")
-        print(f"[ANALYST-GENERATE-BRD] Session ID: {session_id}")
-        print(f"[ANALYST-GENERATE-BRD] Conversation messages: {len(messages)}")
-        
-        # Invoke Lambda
-        try:
-            lambda_response = lambda_client.invoke(
-                FunctionName=lambda_function_name,
-                InvocationType="RequestResponse",
-                Payload=json.dumps(lambda_payload)
-            )
-            
-            # Parse Lambda response
-            response_payload = json.loads(lambda_response['Payload'].read())
-            
-            print(f"[ANALYST-GENERATE-BRD] Lambda response keys: {list(response_payload.keys()) if isinstance(response_payload, dict) else 'Not a dict'}")
-            
-            # Lambda returns: {'statusCode': 200, 'body': '{"brd_id": "...", ...}'}
-            # Need to parse the 'body' field if it exists
-            lambda_status_code = lambda_response['StatusCode']
-            if isinstance(response_payload, dict) and 'statusCode' in response_payload:
-                lambda_status_code = response_payload['statusCode']
-            
-            if lambda_status_code >= 400:
-                error_message = 'Unknown error'
-                if isinstance(response_payload, dict):
-                    # Check if error is in 'body' (JSON string) or directly in response
-                    if 'body' in response_payload:
-                        try:
-                            body_data = json.loads(response_payload['body'])
-                            error_message = body_data.get('error', body_data.get('message', 'Unknown error'))
-                        except:
-                            error_message = response_payload.get('errorMessage', str(response_payload.get('body', 'Unknown error')))
-                    else:
-                        error_message = response_payload.get('errorMessage', response_payload.get('error', 'Unknown error'))
-                print(f"[ANALYST-GENERATE-BRD] ❌ Lambda error: {error_message}")
-                return JSONResponse(status_code=500, content={
-                    "error": "BRD generation failed",
-                    "message": f"Failed to generate BRD: {error_message}"
-                })
-            
-            # Extract brd_id from response
-            # Lambda returns: {'statusCode': 200, 'body': '{"brd_id": "...", ...}'}
-            brd_id_from_response = None
-            if isinstance(response_payload, dict):
-                # First check if brd_id is directly in response_payload
-                if 'brd_id' in response_payload:
-                    brd_id_from_response = response_payload['brd_id']
-                # Otherwise, parse the 'body' field
-                elif 'body' in response_payload:
-                    try:
-                        body_data = json.loads(response_payload['body'])
-                        brd_id_from_response = body_data.get('brd_id')
-                        print(f"[ANALYST-GENERATE-BRD] ✅ Extracted brd_id from body: {brd_id_from_response}")
-                    except json.JSONDecodeError as e:
-                        print(f"[ANALYST-GENERATE-BRD] ⚠️ Failed to parse body as JSON: {e}")
-                        print(f"[ANALYST-GENERATE-BRD] Body content: {response_payload['body'][:200]}")
-            
-            if brd_id_from_response:
-                brd_id = brd_id_from_response
-                print(f"[ANALYST-GENERATE-BRD] ✅ BRD generated successfully: {brd_id}")
-                try:
-                    from db_helper import track_event
-                    track_event(
-                        current_user["user_id"],
-                        module="brd",
-                        event_type="analyst_agent_brd_generated",
-                        metadata={
-                            "session_id": session_id,
-                            "brd_id": brd_id,
-                            "duration_ms": int((time.time() - t0) * 1000),
-                        },
-                    )
-                except Exception as _track_err:
-                    print(f"[ANALYST-GENERATE-BRD] track_event failed (non-fatal): {_track_err}")
-                return JSONResponse(content={
-                    "result": f"BRD generated successfully",
-                    "brd_id": brd_id,
-                    "session_id": session_id,
-                    "message": "BRD has been generated and saved to S3"
-                })
-            else:
-                print(f"[ANALYST-GENERATE-BRD] ⚠️ Lambda response missing brd_id")
-                print(f"[ANALYST-GENERATE-BRD] Full response: {response_payload}")
-                return JSONResponse(status_code=500, content={
-                    "error": "BRD generation incomplete",
-                    "message": "BRD generation completed but response format was unexpected"
-                })
-                
-        except Exception as memory_error:
-            print(f"[ANALYST-GENERATE-BRD] ❌ Error accessing AgentCore Memory: {memory_error}")
-            import traceback
-            traceback.print_exc()
-            return JSONResponse(status_code=500, content={
-                "error": "Failed to retrieve conversation history",
-                "message": f"Error accessing AgentCore Memory: {str(memory_error)}"
-            })
+        # LAMBDA DISABLED - BRD generation Lambda commented out
+        # from botocore.config import Config
+        # lambda_config = Config(read_timeout=900, connect_timeout=10, retries={'max_attempts': 0})
+        # lambda_client = boto3.client('lambda', region_name=REGION, config=lambda_config)
+        # lambda_function_name = LAMBDA_BRD_FROM_HISTORY
+        # lambda_payload = {"conversation_history": messages, "brd_id": brd_id, "session_id": session_id, "user_id": current_user.get("user_id")}
+        return JSONResponse(status_code=501, content={
+            "error": "BRD generation is disabled",
+            "message": "Lambda BRD generation is disabled in this deployment"
+        })
 
     except Exception as e:
         error_msg = str(e)

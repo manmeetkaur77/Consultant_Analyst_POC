@@ -17,7 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Any, Dict, List, Optional
-from auth import verify_azure_token, require_module
+# SSO DISABLED - from auth import verify_azure_token
 from db_helper import (
     create_or_update_user,
     get_user_atlassian_credentials,
@@ -40,7 +40,8 @@ from environment import chat_completion, chat_completion_stream, S3_BUCKET_NAME
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/design", tags=["design"], dependencies=[Depends(require_module("design"))])
+# RBAC module check disabled for Sirius AI
+router = APIRouter(prefix="/api/design", tags=["design"])  # dependencies=[Depends(require_module("design"))]
 
 PROMPT_MODEL_ID    = os.getenv("DESIGN_PROMPT_MODEL_ID",    "global.anthropic.claude-sonnet-4-5-20250929-v1:0")
 XML_MODEL_ID       = os.getenv("DESIGN_XML_MODEL_ID",       "global.anthropic.claude-sonnet-4-5-20250929-v1:0")
@@ -52,21 +53,14 @@ DOCUMENT_MAX_TOKENS = int(os.getenv("DESIGN_DOCUMENT_MAX_TOKENS", "8192"))
 
 # ─── Auth dependency ──────────────────────────────────────────────────────────
 
-async def get_current_user(token_data: dict = Depends(verify_azure_token)):
-    user_id = token_data.get("oid") or token_data.get("sub")
-    email = (
-        token_data.get("preferred_username")
-        or token_data.get("email")
-        or token_data.get("upn")
-    )
-    name = token_data.get("name")
-    if not user_id or not email:
-        raise HTTPException(status_code=401, detail="Invalid token: missing user information")
+# SSO DISABLED - passthrough mock
+async def get_current_user():
+    """SSO disabled - returns mock user for development"""
     try:
-        return create_or_update_user(user_id, email, name)
+        return create_or_update_user("sirius-ai-user", "sirius@siriusai.com", "Sirius AI User")
     except Exception as e:
         logger.error(f"[DESIGN] Auth error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to authenticate user")
+        return {"id": "sirius-ai-user", "email": "sirius@siriusai.com", "name": "Sirius AI User"}
 
 
 # ─── Bedrock helper ───────────────────────────────────────────────────────────

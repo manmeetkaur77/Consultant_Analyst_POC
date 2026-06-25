@@ -19,7 +19,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
 
-from auth import verify_azure_token
+# SSO DISABLED - from auth import verify_azure_token
 from db_helper import get_user_atlassian_credentials, create_or_update_user, get_project
 from services.confluence_service import ConfluenceService
 from routers.internal_utils import validate_api_key, test_sessions, project_events
@@ -34,18 +34,14 @@ router = APIRouter(prefix="/api/test", tags=["test-internal"])
 # AUTHENTICATION DEPENDENCY (for SSE listener)
 # ============================================
 
-async def get_current_user(token_data: dict = Depends(verify_azure_token)):
-    user_id = token_data.get("oid") or token_data.get("sub")
-    email = token_data.get("preferred_username") or token_data.get("email") or token_data.get("upn")
-    name = token_data.get("name")
-    if not user_id or not email:
-        raise HTTPException(status_code=401, detail="Invalid token: missing user information")
+# SSO DISABLED - passthrough mock
+async def get_current_user():
+    """SSO disabled - returns mock user for development"""
     try:
-        user = create_or_update_user(user_id, email, name)
-        return user
+        return create_or_update_user("sirius-ai-user", "sirius@siriusai.com", "Sirius AI User")
     except Exception as e:
         logger.error(f"Error creating/updating user: {e}")
-        raise HTTPException(status_code=500, detail="Failed to authenticate user")
+        return {"id": "sirius-ai-user", "email": "sirius@siriusai.com", "name": "Sirius AI User"}
 
 
 # ============================================

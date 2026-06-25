@@ -45,13 +45,15 @@ COVERAGE_AREAS = (
 class SubScore:
     value: float | None = None
     confidence: str | None = None
-    rationale: str | None = None
+    consumed: str | None = None
+    ranking: str | None = None
 
 
 @dataclass
 class CoverageArea:
     touched: bool = False
     note: str | None = None
+    findings: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -142,7 +144,8 @@ class ConsultingState:
                 k: {
                     "value": v.value,
                     "confidence": v.confidence,
-                    "rationale": v.rationale,
+                    "consumed": v.consumed,
+                    "ranking": v.ranking,
                 }
                 for k, v in self.scores.items()
             },
@@ -152,7 +155,7 @@ class ConsultingState:
 
     def to_coverage_payload(self) -> dict[str, Any]:
         return {
-            k: {"touched": v.touched, "note": v.note}
+            k: {"touched": v.touched, "note": v.note, "findings": v.findings}
             for k, v in self.coverage.items()
         }
 

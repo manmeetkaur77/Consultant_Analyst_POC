@@ -269,24 +269,8 @@ def get_user_identity_arn(user_id: str) -> Optional[str]:
         return None
 
 def check_brd_access_via_agentcore(user_id: str) -> bool:
-    """Check if user has BRD access via AgentCore Identity metadata"""
-    try:
-        # TODO: Implement actual AgentCore Identity API calls
-        # For now, default to allowing access since AgentCore Identity API methods are not available
-        # The actual API might be different - check AgentCore Identity documentation
-        
-        # Placeholder: Always allow access for now
-        # In production, you would:
-        # 1. Check if user identity exists in AgentCore Identity
-        # 2. Read metadata to check has_brd_access flag
-        # 3. Return True/False based on metadata
-        
-        # print(f"[AUTH] AgentCore Identity API not implemented yet - defaulting to allow access")
-        return True  # Default: allow all authenticated users
-    except Exception:
-        # print(f"[AUTH] Error in check_brd_access_via_agentcore: {e}")
-        # On error, default to allow (fail open)
-        return True
+    """Sirius AI: BRD access always granted (auth disabled)"""
+    return True
 
 def grant_brd_access_via_agentcore(user_id: str) -> bool:
     """Grant BRD access to user via AgentCore Identity"""
@@ -320,7 +304,18 @@ from fastapi import Header, HTTPException
 
 
 def verify_azure_token(authorization: Optional[str] = Header(None)) -> dict:
-    """Verify Azure AD JWT token and return decoded claims"""
+    """SSO DISABLED - returns mock token claims for all requests"""
+    return {
+        "oid": "sirius-ai-user",
+        "sub": "sirius-ai-user",
+        "preferred_username": "sirius@siriusai.com",
+        "email": "sirius@siriusai.com",
+        "name": "Sirius AI User",
+        "groups": [],
+    }
+
+def _verify_azure_token_disabled(authorization: Optional[str] = Header(None)) -> dict:
+    """Original SSO verification - DISABLED"""
     if not authorization:
         raise HTTPException(status_code=401, detail="Authorization header missing")
 

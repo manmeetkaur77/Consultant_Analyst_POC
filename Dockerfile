@@ -25,6 +25,9 @@ COPY db_helper.py .
 COPY db_helper_vector.py .
 COPY langfuse_client.py .
 COPY llm_gateway.py .
+COPY consulting_agent_tools.py .
+COPY joseph_prompt.py .
+COPY mock_data/ ./mock_data/
 COPY routers/ ./routers/
 COPY services/ ./services/
 COPY templates/ ./templates/

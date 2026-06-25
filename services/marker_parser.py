@@ -143,8 +143,13 @@ def _handle_scores(state, payload):
             conf = entry["confidence"]
             if conf in ("low", "medium", "high"):
                 ss.confidence = conf
-        if "rationale" in entry:
-            ss.rationale = str(entry["rationale"]) if entry["rationale"] is not None else None
+        if "consumed" in entry:
+            ss.consumed = str(entry["consumed"]) if entry["consumed"] is not None else None
+        if "ranking" in entry:
+            ss.ranking = str(entry["ranking"]) if entry["ranking"] is not None else None
+        # Legacy fallback: older prompt emitted a single "rationale" field
+        if "rationale" in entry and not ss.consumed and not ss.ranking:
+            ss.consumed = str(entry["rationale"]) if entry["rationale"] is not None else None
 
 
 def _handle_coverage(state, payload):
@@ -158,6 +163,11 @@ def _handle_coverage(state, payload):
     note = payload.get("note")
     if note is not None:
         state.coverage[area].note = str(note)
+    findings = payload.get("findings")
+    if isinstance(findings, dict):
+        for key, val in findings.items():
+            if val is not None and str(val).strip():
+                state.coverage[area].findings[str(key)] = str(val)
 
 
 def _handle_citation(state, payload):

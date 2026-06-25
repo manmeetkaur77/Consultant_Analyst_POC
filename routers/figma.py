@@ -11,7 +11,7 @@ import requests
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
-from auth import verify_azure_token
+# SSO DISABLED - from auth import verify_azure_token
 from db_helper import create_or_update_user, update_user_figma_credentials, get_user_figma_credentials
 from services.search_service import search_service
 from services.figma_service import FigmaService
@@ -28,21 +28,14 @@ FIGMA_MAX_TOKENS = int(os.getenv("FIGMA_MAX_TOKENS", "8192"))
 
 # ─── Auth dependency ──────────────────────────────────────────────────────────
 
-async def get_current_user(token_data: dict = Depends(verify_azure_token)):
-    user_id = token_data.get("oid") or token_data.get("sub")
-    email = (
-        token_data.get("preferred_username")
-        or token_data.get("email")
-        or token_data.get("upn")
-    )
-    name = token_data.get("name")
-    if not user_id or not email:
-        raise HTTPException(status_code=401, detail="Invalid token: missing user information")
+# SSO DISABLED - passthrough mock
+async def get_current_user():
+    """SSO disabled - returns mock user for development"""
     try:
-        return create_or_update_user(user_id, email, name)
+        return create_or_update_user("sirius-ai-user", "sirius@siriusai.com", "Sirius AI User")
     except Exception as e:
         logger.error(f"[FIGMA] Auth error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to authenticate user")
+        return {"id": "sirius-ai-user", "email": "sirius@siriusai.com", "name": "Sirius AI User"}
 
 
 # ─── LLM helper ───────────────────────────────────────────────────────────────

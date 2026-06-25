@@ -22,7 +22,14 @@ from typing import Any
 from urllib.parse import urlparse
 
 import requests
-from strands import tool
+
+# Optional import: strands is only needed if consulting agent is used
+try:
+    from strands import tool
+except ImportError:
+    # Fallback: provide a dummy tool decorator if strands is not available
+    def tool(func):
+        return func
 
 from services.consulting_state import (
     COVERAGE_AREAS,

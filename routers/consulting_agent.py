@@ -81,9 +81,18 @@ _CONSUME_INTENT_RE = _re.compile(
     _re.IGNORECASE,
 )
 
-# Auth — reuse the existing dependency from app.py (it's defined in app.py
-# but conventionally available via `routers.orchestration.get_current_user`).
-from routers.orchestration import get_current_user
+# Auth — bypassed for Sirius AI mode (matches app.py passthrough)
+from fastapi import Request as _Request
+
+async def get_current_user(request: _Request) -> dict:
+    return {
+        "user_id": "sirius-ai-user",
+        "email": "sirius@siriusai.com",
+        "name": "Sirius AI User",
+        "token": "mock-token",
+        "groups": [],
+        "allowed_modules": ["all"],
+    }
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -125,6 +134,7 @@ class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
     reset: bool = False
+    skip_kb: bool = False
 
 
 class ExportRequest(BaseModel):
@@ -138,6 +148,12 @@ class SaveToInsightsRequest(BaseModel):
     title: str
     sponsor: Optional[str] = None
     report_markdown: str
+
+
+class RescoreRequest(BaseModel):
+    session_id: str
+    sub_score: str
+    rationale: str
 
 
 # ───────────────────────── Memory helpers ─────────────────────────
@@ -275,11 +291,18 @@ def _build_agent():
     gateway_url = os.getenv("DLXAI_GATEWAY_URL", DEFAULT_DLXAI_GATEWAY_URL)
     gateway_key = os.getenv("DLXAI_GATEWAY_KEY", DEFAULT_DLXAI_GATEWAY_KEY)
     gateway_model = os.getenv("GATEWAY_MODEL", DEFAULT_GATEWAY_MODEL)
-    logger.info("Joseph: using OpenAIModel via DLX gateway, tools=[] (model=%s)", gateway_model)
-    model = OpenAIModel(
-        model_id=gateway_model,
-        client_args={"base_url": gateway_url, "api_key": gateway_key},
-    )
+
+    if not gateway_url:
+        # Local mode — no gateway configured, use Bedrock directly
+        bedrock_model_id = os.getenv("BEDROCK_MODEL_ID", "us.anthropic.claude-sonnet-4-5-20250929-v1:0")
+        logger.info("Joseph: using BedrockModel (local), model=%s", bedrock_model_id)
+        model = BedrockModel(model_id=bedrock_model_id)
+    else:
+        logger.info("Joseph: using OpenAIModel via DLX gateway, tools=[] (model=%s)", gateway_model)
+        model = OpenAIModel(
+            model_id=gateway_model,
+            client_args={"base_url": gateway_url, "api_key": gateway_key},
+        )
 
     return Agent(
         model=model,
@@ -363,7 +386,7 @@ def _extract_text(result: Any) -> str:
     return str(result)
 
 
-def _preprocess_user_message(session_id: str, message: str) -> str:
+def _preprocess_user_message(session_id: str, message: str, skip_kb: bool = False) -> str:
     """
     Server-side enrichment that runs before the agent sees the user message.
 
@@ -386,8 +409,8 @@ def _preprocess_user_message(session_id: str, message: str) -> str:
     parts: list[str] = []
     state = get_or_create_state(session_id)
 
-    # 1. Auto-search the KB on the first inquiry
-    if not state.kb_search_done and len(message.strip()) >= 20:
+    # 1. Auto-search the KB on the first inquiry (skipped if caller disabled it)
+    if not skip_kb and not state.kb_search_done and len(message.strip()) >= 20:
         try:
             results = kb_search(message, limit=10)
             state.kb_results = [
@@ -515,7 +538,7 @@ async def chat(
         set_request_context(session_id, queue)
         history = _load_history(session_id)
         _append_to_memory(session_id, "user", request.message)
-        enriched_user_message = _preprocess_user_message(session_id, request.message)
+        enriched_user_message = _preprocess_user_message(session_id, request.message, skip_kb=request.skip_kb)
         prompt_input = _build_input(history, enriched_user_message, session_id)
 
         async def _run_agent():
@@ -730,6 +753,102 @@ async def save_to_insights(
     ] + [record]
 
     return {"saved": True, "id": record["id"]}
+
+
+# ───────────────────────── /rescore ─────────────────────────
+
+_SUB_SCORE_META: dict[str, dict[str, str]] = {
+    "financial":     {"label": "Financial impact",            "axis": "Business Impact (Y-axis)", "hi": "large revenue gain or cost avoidance", "lo": "negligible financial change"},
+    "productivity":  {"label": "Productivity scale",          "axis": "Business Impact (Y-axis)", "hi": "significant agent-hours freed at scale", "lo": "marginal time saved for a handful of people"},
+    "intent":        {"label": "Business intent & urgency",   "axis": "Business Impact (Y-axis)", "hi": "board-level mandate with hard deadline", "lo": "nice-to-have with no named owner"},
+    "complexity":    {"label": "Implementation complexity",   "axis": "Speed to Value (X-axis)",  "hi": "simple integration of a proven pattern", "lo": "novel research-grade approach with many unknowns"},
+    "data_platform": {"label": "Data & platform readiness",  "axis": "Speed to Value (X-axis)",  "hi": "data is clean, labelled, and accessible today", "lo": "data gaps or infrastructure rebuild required"},
+    "measurement":   {"label": "Measurability of outcome",   "axis": "Speed to Value (X-axis)",  "hi": "clear KPI with an established baseline today", "lo": "vague or lagging indicator with no baseline"},
+}
+
+
+@router.post("/rescore")
+async def rescore(
+    request: RescoreRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Re-evaluate one sub-score from user-edited consumed facts.
+
+    The user edits the raw facts that grounded a score; this endpoint asks the
+    LLM to re-derive the 1–5 value and ranking explanation from those facts,
+    then returns the updated full scores payload plus a one-sentence message.
+    """
+    state = get_state(request.session_id)
+    if state is None:
+        raise HTTPException(status_code=404, detail="Session not found — start the conversation first")
+
+    key = request.sub_score
+    if key not in state.scores:
+        raise HTTPException(status_code=400, detail=f"Unknown sub_score key: {key!r}")
+
+    meta = _SUB_SCORE_META.get(key, {"label": key, "axis": "unknown", "hi": "5=best", "lo": "1=worst"})
+
+    rescore_prompt = (
+        f"You are re-evaluating one sub-score for an AI use case feasibility assessment.\n\n"
+        f"Sub-score: {meta['label']} ({meta['axis']})\n"
+        f"Scale 1–5: 1 = {meta['lo']}; 5 = {meta['hi']}\n\n"
+        f"The analyst has updated the facts that ground this score:\n"
+        f"---\n{request.rationale.strip()}\n---\n\n"
+        f"Based ONLY on these facts, output a single JSON object — no markdown, no prose:\n"
+        f'{{ "score": <1-5 number, decimals ok>, "confidence": "<low|medium|high>", '
+        f'"ranking": "<one sentence: why these facts land at this band rather than adjacent ones>" }}'
+    )
+
+    if not _STRANDS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="LLM backend (Strands) not available")
+
+    try:
+        bedrock_model_id = os.getenv("BEDROCK_MODEL_ID", "us.anthropic.claude-sonnet-4-5-20251001-v1:0")
+        from strands.models import BedrockModel as _BM
+        model = _BM(
+            model_id=bedrock_model_id,
+            region_name=os.getenv("BEDROCK_REGION") or os.getenv("AWS_REGION") or "us-east-1",
+        )
+        rescore_agent = Agent(model=model, tools=[], system_prompt=(
+            "You are a scoring assistant. Respond with valid JSON only — "
+            "no markdown fences, no commentary, just the JSON object requested."
+        ))
+
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(None, lambda: rescore_agent(rescore_prompt))
+        raw_text = _extract_text(result).strip()
+
+        # Strip any accidental markdown fences the model adds
+        if raw_text.startswith("```"):
+            raw_text = raw_text.split("```")[1]
+            if raw_text.startswith("json"):
+                raw_text = raw_text[4:]
+            raw_text = raw_text.strip()
+
+        data = json.loads(raw_text)
+    except json.JSONDecodeError as e:
+        logger.error("Rescore JSON parse error — raw=%r err=%s", raw_text[:200], e)
+        raise HTTPException(status_code=500, detail=f"LLM returned non-JSON: {e}")
+    except Exception as e:
+        logger.exception("Rescore LLM call failed")
+        raise HTTPException(status_code=500, detail=f"Rescore failed: {e}")
+
+    new_value = float(data.get("score") or data.get("value") or state.scores[key].value or 3.0)
+    new_confidence = str(data.get("confidence") or "medium").lower()
+    new_ranking = str(data.get("ranking") or "").strip()
+
+    # Clamp to 1–5
+    new_value = max(1.0, min(5.0, new_value))
+
+    # Persist updated sub-score (consumed = what the user edited)
+    state.scores[key].value = new_value
+    state.scores[key].confidence = new_confidence
+    state.scores[key].consumed = request.rationale.strip()
+    state.scores[key].ranking = new_ranking
+
+    message = new_ranking or f"Re-scored {meta['label']} to {new_value}/5 ({new_confidence} confidence)."
+
+    return {"scores": state.to_scores_payload(), "message": message}
 
 
 # ───────────────────────── /export ─────────────────────────

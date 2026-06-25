@@ -18,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from html import unescape
 
-from auth import verify_azure_token, require_module
+# SSO DISABLED - from auth import verify_azure_token
 from db_helper import get_user_atlassian_credentials, create_or_update_user, get_project, track_event
 from services.confluence_service import ConfluenceService
 from services.github_service import GitHubService
@@ -27,7 +27,8 @@ from utils.requirement_ids import normalize_requirement_id
 from utils.content_hashing import hash_text
 from environment import chat_completion, chat_completion_stream
 
-router = APIRouter(prefix="/api/test", tags=["test"], dependencies=[Depends(require_module("testing"))])
+# RBAC module check disabled for Sirius AI
+router = APIRouter(prefix="/api/test", tags=["test"])  # dependencies=[Depends(require_module("testing"))]
 logger = logging.getLogger(__name__)
 
 BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "global.anthropic.claude-sonnet-4-5-20250929-v1:0")
@@ -37,18 +38,14 @@ BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "global.anthropic.claude-sonnet
 # AUTHENTICATION DEPENDENCY
 # ============================================
 
-async def get_current_user(token_data: dict = Depends(verify_azure_token)):
-    user_id = token_data.get("oid") or token_data.get("sub")
-    email = token_data.get("preferred_username") or token_data.get("email") or token_data.get("upn")
-    name = token_data.get("name")
-    if not user_id or not email:
-        raise HTTPException(status_code=401, detail="Invalid token: missing user information")
+# SSO DISABLED - passthrough mock
+async def get_current_user():
+    """SSO disabled - returns mock user for development"""
     try:
-        user = create_or_update_user(user_id, email, name)
-        return user
+        return create_or_update_user("sirius-ai-user", "sirius@siriusai.com", "Sirius AI User")
     except Exception as e:
         logger.error(f"Error creating/updating user: {e}")
-        raise HTTPException(status_code=500, detail="Failed to authenticate user")
+        return {"id": "sirius-ai-user", "email": "sirius@siriusai.com", "name": "Sirius AI User"}
 
 
 # ============================================

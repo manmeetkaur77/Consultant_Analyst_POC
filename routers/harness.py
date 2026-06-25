@@ -9,7 +9,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
-from auth import verify_azure_token
+# SSO DISABLED - from auth import verify_azure_token
 from environment import chat_completion, chat_completion_with_tools
 
 logger = logging.getLogger(__name__)
@@ -21,11 +21,10 @@ HARNESS_BASE = "https://app.harness.io"
 
 # ─── Auth dependency ──────────────────────────────────────────────────────────
 
-async def get_current_user(token_data: dict = Depends(verify_azure_token)):
-    user_id = token_data.get("oid") or token_data.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    return token_data
+# SSO DISABLED - passthrough mock
+async def get_current_user():
+    """SSO disabled - returns mock token data for development"""
+    return {"oid": "sirius-ai-user", "preferred_username": "sirius@siriusai.com", "name": "Sirius AI User"}
 
 
 # ─── Request Models ───────────────────────────────────────────────────────────

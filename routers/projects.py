@@ -22,8 +22,8 @@ from db_helper import (
     get_project_brd_session
 )
 
-# Import authentication from auth.py - assuming app run from root
-from auth import verify_azure_token
+# SSO DISABLED - auth import commented out
+# from auth import verify_azure_token
 
 logger = logging.getLogger(__name__)
 
@@ -71,27 +71,14 @@ class ProjectResponse(BaseModel):
 # AUTHENTICATION DEPENDENCY
 # ============================================
 
-def get_current_user(token_data: dict = Depends(verify_azure_token)):
-    """
-    Get current user from Azure AD token
-    Creates/updates user in database if needed.
-    Using def (not async def) so FastAPI runs this in a thread pool,
-    preventing synchronous DB calls from blocking the event loop.
-    """
-    user_id = token_data.get("oid") or token_data.get("sub")
-    email = token_data.get("preferred_username") or token_data.get("email") or token_data.get("upn")
-    name = token_data.get("name")
-
-    if not user_id or not email:
-        raise HTTPException(status_code=401, detail="Invalid token: missing user information")
-
-    # Create or update user in database
+# SSO DISABLED - passthrough mock
+def get_current_user():
+    """SSO disabled - returns mock user for development"""
     try:
-        user = create_or_update_user(user_id, email, name)
-        return user
+        return create_or_update_user("sirius-ai-user", "sirius@siriusai.com", "Sirius AI User")
     except Exception as e:
         logger.error(f"Error creating/updating user: {e}")
-        raise HTTPException(status_code=500, detail="Failed to authenticate user")
+        return {"id": "sirius-ai-user", "email": "sirius@siriusai.com", "name": "Sirius AI User"}
 
 
 # ============================================
