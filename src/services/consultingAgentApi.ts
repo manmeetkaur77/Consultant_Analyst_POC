@@ -2,7 +2,10 @@ import { API_CONFIG } from "@/config/api";
 import { apiPost, apiGet } from "@/services/api";
 import { getEffectiveToken } from "@/services/authService";
 
-const BASE = `${API_CONFIG.BASE_URL}/api/consulting`;
+// Use a relative path so the Vite dev-server proxy handles the request
+// (avoids cross-origin issues when hitting http://localhost:8000 directly).
+// In production, relative paths are handled by the ALB — same as all other endpoints.
+const BASE = `/api/consulting`;
 
 export type SubScoreKey =
   | "financial"
@@ -135,21 +138,29 @@ export async function* streamConsultingMessage(
   message: string,
   sessionId: string | null,
   reset: boolean = false,
+  skipKb: boolean = false,
 ): AsyncGenerator<ConsultingSSEEvent, void, unknown> {
   const token = await getEffectiveToken();
 
-  const response = await fetch(`${BASE}/chat`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify({
-      message,
-      session_id: sessionId,
-      reset,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE}/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        message,
+        session_id: sessionId,
+        reset,
+        skip_kb: skipKb,
+      }),
+    });
+  } catch (networkErr) {
+    yield { type: "error", message: `Network error: cannot reach backend at ${BASE}/chat. Is the server running?` };
+    return;
+  }
 
   if (!response.ok) {
     const errText = await response.text().catch(() => "");

@@ -6,25 +6,26 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppStateProvider } from "./contexts/AppStateContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import { ModuleProtectedRoute } from "./components/auth/ModuleProtectedRoute";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import BRDAssistant from "./pages/BRDAssistant";
-import AnalystAgent from "./pages/AnalystAgent";
-import ConfluencePage from "./pages/ConfluencePage";
-import JiraPage from "./pages/JiraPage";
-import JiraGenerationPage from "./pages/JiraGenerationPage";
-import TestScenarioPage from "./pages/TestScenarioPage";
-import SessionDesignAssistant from "./pages/SessionDesignAssistant";
-import PairProgramming from "./pages/PairProgramming";
-import TestingPage from "./pages/TestingPage";
-import HarnessPage from "./pages/HarnessPage";
-import FigmaPage from "./pages/FigmaPage";
-import MyProfile from "./pages/MyProfile";
-import OrganizationUsage from "./pages/OrganizationUsage";
-import BRDSyncPage from "./pages/BRDSyncPage";
-import BRDComparisonPage from "./pages/BRDComparisonPage";
-import PRSyncPlaceholder from "./pages/PRSyncPlaceholder";
+// POC MODE: only consulting agent routes active
+// import { ModuleProtectedRoute } from "./components/auth/ModuleProtectedRoute";
+// import Login from "./pages/Login";
+// import Dashboard from "./pages/Dashboard";
+// import BRDAssistant from "./pages/BRDAssistant";
+// import AnalystAgent from "./pages/AnalystAgent";
+// import ConfluencePage from "./pages/ConfluencePage";
+// import JiraPage from "./pages/JiraPage";
+// import JiraGenerationPage from "./pages/JiraGenerationPage";
+// import TestScenarioPage from "./pages/TestScenarioPage";
+// import SessionDesignAssistant from "./pages/SessionDesignAssistant";
+// import PairProgramming from "./pages/PairProgramming";
+// import TestingPage from "./pages/TestingPage";
+// import HarnessPage from "./pages/HarnessPage";
+// import FigmaPage from "./pages/FigmaPage";
+// import MyProfile from "./pages/MyProfile";
+// import OrganizationUsage from "./pages/OrganizationUsage";
+// import BRDSyncPage from "./pages/BRDSyncPage";
+// import BRDComparisonPage from "./pages/BRDComparisonPage";
+// import PRSyncPlaceholder from "./pages/PRSyncPlaceholder";
 import ConsultingAgent from "./pages/ConsultingAgent";
 import InsightsPage from "./pages/InsightsPage";
 import NotFound from "./pages/NotFound";
@@ -45,172 +46,9 @@ const App = () => {
             <Sonner />
             <BrowserRouter basename={basePath}>
               <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route
-                  path="/"
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                {/* Business group modules */}
-                <Route
-                  path="/brd-assistant"
-                  element={
-                    <ModuleProtectedRoute moduleId="brd">
-                      <BRDAssistant />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/analyst-agent"
-                  element={
-                    <ModuleProtectedRoute moduleId="brd">
-                      <AnalystAgent />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/confluence"
-                  element={
-                    <ModuleProtectedRoute moduleId="confluence">
-                      <ConfluencePage />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/jira"
-                  element={
-                    <ModuleProtectedRoute moduleId="jira">
-                      <JiraPage />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/jira-generation/:confluencePageId"
-                  element={
-                    <ModuleProtectedRoute moduleId="jira">
-                      <JiraGenerationPage />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                {/* Tech group modules */}
-                {/* Design Assistant — multi-session (Diagram + SAD phases). */}
-                <Route
-                  path="/design-assistant"
-                  element={
-                    <ModuleProtectedRoute moduleId="design">
-                      <SessionDesignAssistant />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/design-assistant/:projectId/:sessionId?"
-                  element={
-                    <ModuleProtectedRoute moduleId="design">
-                      <SessionDesignAssistant />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/pair-programming"
-                  element={
-                    <ModuleProtectedRoute moduleId="pair-programming">
-                      <PairProgramming />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/test-generation/:confluencePageId"
-                  element={
-                    <ModuleProtectedRoute moduleId="testing">
-                      <TestScenarioPage />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/testing"
-                  element={
-                    <ModuleProtectedRoute moduleId="testing">
-                      <TestingPage />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/test-generation/:confluencePageId"
-                  element={
-                    <ProtectedRoute>
-                      <TestScenarioPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/testing"
-                  element={
-                    <ProtectedRoute>
-                      <TestingPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/harness"
-                  element={
-                    <ProtectedRoute>
-                      <HarnessPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/figma"
-                  element={
-                    <ModuleProtectedRoute moduleId="figma">
-                      <FigmaPage />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <MyProfile />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/organization-usage"
-                  element={
-                    <ProtectedRoute>
-                      <OrganizationUsage />
-                    </ProtectedRoute>
-                  }
-                />
-                {/* Code Intelligence */}
-                <Route
-                  path="/brd-sync"
-                  element={
-                    <ModuleProtectedRoute moduleId="brd-sync">
-                      <BRDSyncPage />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/brd-comparison"
-                  element={
-                    <ModuleProtectedRoute moduleId="brd-sync">
-                      <BRDComparisonPage />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/pr-sync"
-                  element={
-                    <ModuleProtectedRoute moduleId="pr-sync">
-                      <PRSyncPlaceholder />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                {/* Consulting Agent — ungated, auth-only */}
+                {/* POC MODE: redirect root to consulting agent */}
+                <Route path="/" element={<Navigate to="/consulting-agent" replace />} />
+                {/* Consulting Agent */}
                 <Route
                   path="/consulting-agent"
                   element={
@@ -228,7 +66,19 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                {/* POC MODE: all other routes commented out
+                <Route path="/login" element={<Login />} />
+                <Route path="/brd-assistant" element={<BRDAssistant />} />
+                <Route path="/analyst-agent" element={<AnalystAgent />} />
+                <Route path="/confluence" element={<ConfluencePage />} />
+                <Route path="/jira" element={<JiraPage />} />
+                <Route path="/design-assistant" element={<SessionDesignAssistant />} />
+                <Route path="/testing" element={<TestingPage />} />
+                <Route path="/harness" element={<HarnessPage />} />
+                <Route path="/figma" element={<FigmaPage />} />
+                <Route path="/profile" element={<MyProfile />} />
+                <Route path="/brd-sync" element={<BRDSyncPage />} />
+                */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Library } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -14,31 +14,31 @@ import { ReportSideSheet } from "@/components/insights/ReportSideSheet";
 // Value both live in the NW corner of the chart (high impact, lower speed),
 // so they're shown under a single tab.
 type QuadrantTab =
-  | "Quick Win"
-  | "Accelerator"
-  | "Incremental"
-  | "Defer";
+  | "Transformational"
+  | "Accelerators"
+  | "Quick Wins"
+  | "Incremental Growth";
 
 const TAB_ORDER: QuadrantTab[] = [
-  "Accelerator",
-  "Quick Win",
-  "Incremental",
-  "Defer",
+  "Transformational",
+  "Accelerators",
+  "Quick Wins",
+  "Incremental Growth",
 ];
 
 const TAB_DESCRIPTION: Record<QuadrantTab, string> = {
-  "Accelerator": "High impact · plan now (incl. Transformational)",
-  "Quick Win": "High impact · fastest to ship",
-  "Incremental": "Modest impact · easy wins",
-  Defer: "Park or decline",
+  "Transformational": "High impact · longer to deliver",
+  "Accelerators": "High impact · high speed",
+  "Quick Wins": "Fast to ship · moderate impact",
+  "Incremental Growth": "Lower impact · steady progress",
 };
 
 // Which underlying quadrants count toward each tab
 const TAB_INCLUDES: Record<QuadrantTab, string[]> = {
-  "Accelerator": ["Accelerator", "Transformational Value"],
-  "Quick Win": ["Quick Win"],
-  "Incremental": ["Incremental Growth"],
-  Defer: ["Defer"],
+  "Transformational": ["Transformational Value", "Accelerator"],
+  "Accelerators": ["Quick Win"],
+  "Quick Wins": ["Incremental Growth"],
+  "Incremental Growth": ["Defer"],
 };
 
 const InsightsPage = () => {
@@ -50,8 +50,27 @@ const InsightsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openAssessment, setOpenAssessment] = useState<InsightAssessment | null>(null);
-  // Default to Accelerator since it's the largest, most decision-relevant group
-  const [activeTab, setActiveTab] = useState<QuadrantTab>("Accelerator");
+  const [activeTab, setActiveTab] = useState<QuadrantTab>("Transformational");
+
+  // Leadership overrides: quadrant + axes, so both the tab and the matrix dot update.
+  type AssessmentOverride = { quadrant: string; impact: number; speed: number };
+  const [overrides, setOverrides] = useState<Record<string, AssessmentOverride>>(() => {
+    try { return JSON.parse(localStorage.getItem("lq_overrides") ?? "{}"); }
+    catch { return {}; }
+  });
+
+  const handleQuadrantOverride = useCallback(
+    (id: string, override: AssessmentOverride | null) => {
+      setOverrides((prev) => {
+        const next = { ...prev };
+        if (override === null) delete next[id];
+        else next[id] = override;
+        localStorage.setItem("lq_overrides", JSON.stringify(next));
+        return next;
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -75,37 +94,60 @@ const InsightsPage = () => {
     };
   }, [focusId]);
 
-  // Per-quadrant counts (used by both the matrix corner labels and the tabs)
-  const quadrantCounts = useMemo(
-    () => ({
-      "Quick Win": assessments.filter((a) => a.quadrant === "Quick Win").length,
-      Accelerator: assessments.filter((a) => a.quadrant === "Accelerator").length,
-      "Transformational Value": assessments.filter(
-        (a) => a.quadrant === "Transformational Value",
-      ).length,
-      "Incremental Growth": assessments.filter(
-        (a) => a.quadrant === "Incremental Growth",
-      ).length,
-      Defer: assessments.filter((a) => a.quadrant === "Defer").length,
-    }),
-    [assessments],
+  // Effective quadrant for an assessment — uses leadership override if set
+  const effectiveQuadrant = useCallback(
+    (a: InsightAssessment) => overrides[a.id]?.quadrant ?? a.quadrant,
+    [overrides],
   );
 
-  // Index cards are filtered by the active quadrant tab. Accelerator tab
-  // includes both Accelerator and Transformational Value assessments since
-  // they share the visual NW corner.
+  // Assessments with axes patched by leadership overrides — used by the matrix
+  // so dots move to their new position when sliders are adjusted.
+  const assessmentsForMatrix = useMemo(
+    () =>
+      assessments.map((a) => {
+        const ov = overrides[a.id];
+        if (!ov) return a;
+        return { ...a, axes: { impact: ov.impact, speed: ov.speed } };
+      }),
+    [assessments, overrides],
+  );
+
+  // Per-quadrant counts mapped to visual matrix corners (using effective quadrant
+  // so leadership overrides are reflected in the corner badges too).
+  const quadrantCounts = useMemo(
+    () => ({
+      // NW — Transformational Value + Accelerator (high impact, low-medium speed)
+      "Transformational Value":
+        assessments.filter((a) => effectiveQuadrant(a) === "Transformational Value").length,
+      Accelerator:
+        assessments.filter((a) => effectiveQuadrant(a) === "Accelerator").length,
+      // NE — Quick Win (high impact, high speed)
+      "Quick Win":
+        assessments.filter((a) => effectiveQuadrant(a) === "Quick Win").length,
+      // SE — Incremental Growth
+      "Incremental Growth":
+        assessments.filter((a) => effectiveQuadrant(a) === "Incremental Growth").length,
+      // SW — Defer
+      Defer:
+        assessments.filter((a) => effectiveQuadrant(a) === "Defer").length,
+    }),
+    [assessments, effectiveQuadrant],
+  );
+
+  // Index cards filtered by tab, respecting leadership overrides
   const filteredForCards = useMemo(() => {
     const includes = TAB_INCLUDES[activeTab];
-    return assessments.filter((a) => includes.includes(a.quadrant));
-  }, [assessments, activeTab]);
+    return assessments.filter((a) => includes.includes(effectiveQuadrant(a)));
+  }, [assessments, activeTab, effectiveQuadrant]);
 
-  // Per-tab count
+  // Per-tab count derived from quadrantCounts (effective, post-override)
   const tabCounts = useMemo(
     () => ({
-      "Accelerator": (quadrantCounts.Accelerator ?? 0) + (quadrantCounts["Transformational Value"] ?? 0),
-      "Quick Win": quadrantCounts["Quick Win"] ?? 0,
-      "Incremental": quadrantCounts["Incremental Growth"] ?? 0,
-      Defer: quadrantCounts.Defer ?? 0,
+      "Transformational":
+        (quadrantCounts["Transformational Value"] ?? 0) + (quadrantCounts.Accelerator ?? 0),
+      "Accelerators": quadrantCounts["Quick Win"] ?? 0,
+      "Quick Wins": quadrantCounts["Incremental Growth"] ?? 0,
+      "Incremental Growth": quadrantCounts.Defer ?? 0,
     }),
     [quadrantCounts],
   );
@@ -158,7 +200,7 @@ const InsightsPage = () => {
               </span>
             </div>
             <InsightsMatrix
-              assessments={assessments}
+              assessments={assessmentsForMatrix}
               activeId={openAssessment?.id ?? null}
               onPointClick={(a) => setOpenAssessment(a)}
               quadrantCounts={quadrantCounts}
@@ -242,6 +284,7 @@ const InsightsPage = () => {
       <ReportSideSheet
         assessment={openAssessment}
         onClose={() => setOpenAssessment(null)}
+        onQuadrantOverride={handleQuadrantOverride}
       />
     </div>
   );

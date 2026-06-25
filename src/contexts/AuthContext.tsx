@@ -61,38 +61,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Initialize auth — handle redirect response when Azure sends user back
+  // Initialize auth — SIRIUS AI: Bypass Azure AD, use mock user
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        await ensureMsalInitialized();
-
-        // CRITICAL: handle redirect response when Azure redirects back after login
-        const redirectResult = await msalInstance.handleRedirectPromise();
-        if (redirectResult) {
-          const msalUser = getUserInfo();
-          if (msalUser) {
-            const token = redirectResult.idToken;
-            setAccessToken(token);
-            const hydrated = await buildUserFromBackend(msalUser, token);
-            setUser(hydrated);
-          }
-          setIsLoading(false);
-          return;
-        }
-
-        // Already logged in (token in localStorage from previous session)
-        if (checkAzureAuth()) {
-          const msalUser = getUserInfo();
-          if (msalUser) {
-            const token = await getAccessToken();
-            if (token) {
-              setAccessToken(token);
-              const hydrated = await buildUserFromBackend(msalUser, token);
-              setUser(hydrated);
-            }
-          }
-        }
+        console.log("[AUTH] Sirius AI mode — bypassing Azure AD, using mock user");
+        
+        // SIRIUS AI: Create mock user directly (no Azure AD)
+        const mockUser: User = {
+          id: "sirius-ai-user",
+          email: "sirius@siriusai.com",
+          name: "Sirius AI User",
+          groups: [],
+          allowedModules: ["all"],
+        };
+        
+        setUser(mockUser);
+        setAccessToken("mock-token");
+        
       } catch (error) {
         console.error("Error initializing auth:", error);
       } finally {
@@ -106,16 +92,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async () => {
     try {
       setIsLoading(true);
-      const response = await loginWithAzureAD();
-      if (response) {
-        const msalUser = getUserInfo();
-        if (msalUser) {
-          const token = response.accessToken;
-          setAccessToken(token);
-          const hydrated = await buildUserFromBackend(msalUser, token);
-          setUser(hydrated);
-        }
-      }
+      // SIRIUS AI: Skip Azure AD, use mock user
+      console.log("[AUTH] Sirius AI mode — skipping Azure login");
+      const mockUser: User = {
+        id: "sirius-ai-user",
+        email: "sirius@siriusai.com",
+        name: "Sirius AI User",
+        groups: [],
+        allowedModules: ["all"],
+      };
+      setUser(mockUser);
+      setAccessToken("mock-token");
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -127,7 +114,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       setIsLoading(true);
-      await azureLogout();
+      // SIRIUS AI: Simple logout (no Azure AD call)
+      console.log("[AUTH] Sirius AI mode — logging out");
       setUser(null);
       setAccessToken(null);
     } catch (error) {

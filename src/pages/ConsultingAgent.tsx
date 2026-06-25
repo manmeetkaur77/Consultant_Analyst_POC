@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   Paperclip,
   Send,
-  RotateCcw,
   FileText,
   FileType,
   ArrowRight,
@@ -247,7 +246,7 @@ const INTRO_HINTS = [
   {
     icon: FileOutput,
     label: "Deliverable",
-    hint: "Exportable PDF + DOCX + Velox handoff JSON for the next agent.",
+    hint: "Exportable PDF + DOCX + handoff JSON for the next agent.",
     when: "When we're ready to land",
   },
 ] as const;
@@ -402,6 +401,14 @@ const SUBSCORE_LABEL: Record<SubScoreKey, string> = {
   complexity: "Implementation",
   data_platform: "Data & platform",
   measurement: "Measurement",
+};
+
+const QUADRANT_LABEL: Record<string, string> = {
+  "Transformational Value": "Transformational",
+  "Accelerator": "Transformational",
+  "Quick Win": "Accelerators",
+  "Incremental Growth": "Quick Wins",
+  "Defer": "Incremental Growth",
 };
 
 const COVERAGE_LABEL: Record<CoverageArea, string> = {
@@ -621,6 +628,7 @@ const ConsultingAgent = () => {
   const [currentReport, setCurrentReport] = useState<string | null>(null);
   const [kbResults, setKbResults] = useState<KBResult[]>([]);
   const [kbQuery, setKbQuery] = useState<string | null>(null);
+  const [kbEnabled, setKbEnabled] = useState(false);
 
   const [uploadedFiles, setUploadedFiles] = useState<
     { fileId: string; filename: string }[]
@@ -745,6 +753,7 @@ const ConsultingAgent = () => {
         text,
         sidForRequest,
         resetForRequest,
+        !kbEnabled,
       )) {
         if (event.type === "metadata") {
           setSessionId(event.session_id);
@@ -1057,18 +1066,6 @@ const ConsultingAgent = () => {
             owns the full viewport height. Restore `h-[calc(100vh-4rem)]`
             here if you re-enable the TopHeader. */}
         <div className="flex flex-col h-screen joseph-page-canvas">
-          {/* Subtle floating "New assessment" button — replaces the
-              removed Velox-branded header strip. Discoverable but
-              quiet, doesn't clutter the chat surface. */}
-          <button
-            onClick={handleReset}
-            disabled={isStreaming}
-            className="joseph-floating-new"
-            title="Start a new assessment"
-          >
-            <RotateCcw className="w-3 h-3" />
-            New assessment
-          </button>
 
           {/* The chat + composer block is reused in both layouts. We pull
               it out so we don't render the textarea twice (and lose focus
@@ -1088,13 +1085,10 @@ const ConsultingAgent = () => {
                       conversation progresses. Both disappear after the
                       first user message. */}
                   {!hasAnyPanel && turns.every((t) => t.role !== "user") && (
-                    <>
-                      <SuggestedPrompts
-                        disabled={isStreaming}
-                        onPick={(p) => handleSend(p)}
-                      />
-                      <IntroHints />
-                    </>
+                    <SuggestedPrompts
+                      disabled={isStreaming}
+                      onPick={(p) => handleSend(p)}
+                    />
                   )}
 
                   {uploadedFiles.length > 0 && (
@@ -1110,6 +1104,34 @@ const ConsultingAgent = () => {
                 </div>
 
                 <div className="joseph-composer relative" style={{ zIndex: 1 }}>
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <span className="text-base font-medium text-foreground">
+                      Search within Organisational Documents?
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setKbEnabled((v) => !v)}
+                      className="flex items-center gap-2.5 focus:outline-none"
+                      title={kbEnabled ? "Knowledge Base ON — click to disable" : "Knowledge Base OFF — click to enable"}
+                      role="switch"
+                      aria-checked={kbEnabled}
+                    >
+                      <span className={`text-xs font-semibold transition-colors ${kbEnabled ? "text-primary" : "text-muted-foreground"}`}>
+                        {kbEnabled ? "ON" : "OFF"}
+                      </span>
+                      <span
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full border-2 transition-colors ${
+                          kbEnabled ? "bg-primary border-primary" : "bg-muted border-border"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                            kbEnabled ? "translate-x-[22px]" : "translate-x-0.5"
+                          }`}
+                        />
+                      </span>
+                    </button>
+                  </div>
                   <div className="flex items-end gap-2.5">
                     <input
                       ref={fileInputRef}
@@ -1274,7 +1296,7 @@ const ConsultingAgent = () => {
                             return String(order.slice(0, 2).filter(Boolean).length + 1).padStart(2, "0");
                           })()}
                           title="Scoring ledger"
-                          badge={scores?.quadrant ?? null}
+                          badge={scores?.quadrant ? (QUADRANT_LABEL[scores.quadrant] ?? scores.quadrant) : null}
                           expanded={expandedSections.has("scores")}
                           onToggle={() => toggleSection("scores")}
                           accent="scores"
@@ -1336,7 +1358,7 @@ const ConsultingAgent = () => {
                             return String(order.slice(0, 4).filter(Boolean).length + 1).padStart(2, "0");
                           })()}
                           title="Deliverable"
-                          badge={scores?.quadrant ?? "Ready"}
+                          badge={scores?.quadrant ? (QUADRANT_LABEL[scores.quadrant] ?? scores.quadrant) : "Ready"}
                           expanded={expandedSections.has("report")}
                           onToggle={() => toggleSection("report")}
                           accent="report"
@@ -1385,7 +1407,7 @@ const ConsultingAgent = () => {
                               onClick={() => setVeloxOpen(true)}
                             >
                               <ArrowRight className="w-3 h-3" />
-                              Velox handoff
+                              Handoff
                             </button>
                           </div>
                         </CollapsibleSection>

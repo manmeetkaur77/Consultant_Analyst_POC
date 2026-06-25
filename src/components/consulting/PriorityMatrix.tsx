@@ -187,13 +187,13 @@ export const PriorityMatrix = ({
       </div>
 
       <div className="joseph-matrix-key">
-        <div className="joseph-matrix-key__cell"><strong>NE</strong> Quick win</div>
+        <div className="joseph-matrix-key__cell"><strong>NE</strong> Accelerators</div>
         <div className="joseph-matrix-key__cell" style={{ justifyContent: "flex-end" }}>
-          <strong>NW</strong> Transform
+          <strong>NW</strong> Transformational
         </div>
-        <div className="joseph-matrix-key__cell"><strong>SE</strong> Incremental</div>
+        <div className="joseph-matrix-key__cell"><strong>SE</strong> Quick Wins</div>
         <div className="joseph-matrix-key__cell" style={{ justifyContent: "flex-end" }}>
-          <strong>SW</strong> Defer
+          <strong>SW</strong> Incremental Growth
         </div>
       </div>
     </section>

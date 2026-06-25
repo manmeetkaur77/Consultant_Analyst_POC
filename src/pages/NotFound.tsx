@@ -4,7 +4,7 @@ import { Home, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { THEME } from "@/config/theme";
 
-const appName = THEME === "siriusai" ? "SiriusAI" : "Velox";
+const appName = THEME === "siriusai" ? "SiriusAI" : "DLX";
 
 const Logo = () => {
   if (THEME === "siriusai") {
@@ -18,10 +18,10 @@ const Logo = () => {
   }
   return (
     <img
-        src="https://www.deluxe.com/etc.clientlibs/deluxe/clientlibs/clientlib-commons/resources/images/sprites/view/svg/sprite.view.svg#deluxe_logo_2020"
-        alt="SiriusAI"
-        className="h-20 object-contain"
-      />
+      src={`${import.meta.env.BASE_URL}dlx-logo.png`}
+      alt="DLX"
+      className="h-8 object-contain"
+    />
   );
 };
 

@@ -120,16 +120,15 @@ export const InsightsMatrix = ({
        */}
       <div className="insights-board__labels" aria-hidden>
         <span className="insights-board__label insights-board__label--nw">
-          <span className="insights-board__label-name">Accelerator · Transformational</span>
+          <span className="insights-board__label-name">Transformational</span>
           {quadrantCounts && (
             <span className="insights-board__label-count">
-              {(quadrantCounts.Accelerator ?? 0) +
-                (quadrantCounts["Transformational Value"] ?? 0)}
+              {(quadrantCounts["Transformational Value"] ?? 0) + (quadrantCounts.Accelerator ?? 0)}
             </span>
           )}
         </span>
         <span className="insights-board__label insights-board__label--ne">
-          <span className="insights-board__label-name">Quick Win</span>
+          <span className="insights-board__label-name">Accelerators</span>
           {quadrantCounts && (
             <span className="insights-board__label-count">
               {quadrantCounts["Quick Win"] ?? 0}
@@ -137,7 +136,7 @@ export const InsightsMatrix = ({
           )}
         </span>
         <span className="insights-board__label insights-board__label--sw">
-          <span className="insights-board__label-name">Defer</span>
+          <span className="insights-board__label-name">Incremental Growth</span>
           {quadrantCounts && (
             <span className="insights-board__label-count">
               {quadrantCounts.Defer ?? 0}
@@ -145,7 +144,7 @@ export const InsightsMatrix = ({
           )}
         </span>
         <span className="insights-board__label insights-board__label--se">
-          <span className="insights-board__label-name">Incremental</span>
+          <span className="insights-board__label-name">Quick Wins</span>
           {quadrantCounts && (
             <span className="insights-board__label-count">
               {quadrantCounts["Incremental Growth"] ?? 0}

@@ -12,7 +12,7 @@ const AREAS: { key: CoverageArea; label: string }[] = [
   { key: "value", label: "Value" },
   { key: "viability", label: "Viability" },
   { key: "drivers", label: "Drivers" },
-  { key: "instinct", label: "Instinct" },
+  { key: "instinct", label: "Implementation" },
 ];
 
 /**
@@ -36,28 +36,21 @@ const SUBSECTIONS: Record<
     { key: "qualitative", label: "Qualitative", hint: "DX, CX, regulatory posture, brand, learning, optionality" },
   ],
   viability: [
-    { key: "data", label: "Data", hint: "Exists? volume, quality, labelled, access, privacy/rights" },
-    { key: "platform", label: "Platform", hint: "Stack support, integration points, MLOps maturity" },
+    { key: "data", label: "Data and platform", hint: "Exists? volume, quality, labelled, access, privacy/rights; stack support, MLOps maturity" },
     { key: "resources", label: "Resources & skills", hint: "Who builds, internal vs vendor, headroom" },
-    { key: "money", label: "Money", hint: "Order of magnitude, funded vs ask, TCO incl. run cost" },
-    { key: "time", label: "Time", hint: "Time to a credible pilot; hard external deadlines" },
+    { key: "money", label: "Effort and Cost", hint: "Order of magnitude, funded vs ask, TCO incl. run cost and time to pilot" },
   ],
   drivers: [
     { key: "monetary", label: "Monetary", hint: "Upside captured / downside avoided" },
     { key: "regulatory", label: "Regulatory", hint: "Compliance pressure, deadline-driven" },
     { key: "strategic", label: "Strategic alignment", hint: "Fit with stated org priorities" },
-    { key: "ease", label: "Ease of implementation", hint: "Quick win vs transformational" },
-    { key: "dependencies", label: "Dependencies", hint: "Sequencing — what must be true first" },
-    { key: "reversibility", label: "Reversibility", hint: "One-way vs two-way door" },
+    { key: "ease", label: "Prioritization", hint: "Quick win vs transformational" },
     { key: "cost_of_delay", label: "Cost of delay", hint: "What waiting a quarter costs" },
   ],
   instinct: [
-    { key: "politics", label: "Org politics", hint: "Sponsor strength, resistors, business pull vs tech push" },
-    { key: "track_record", label: "Track record", hint: "Has this team shipped similar before" },
     { key: "adoption", label: "Adoption risk", hint: "Will users actually use it; the change story" },
-    { key: "failure_mode", label: "Failure mode", hint: "Cost if it fails publicly" },
     { key: "build_buy", label: "Build vs buy", hint: "Credible vendor today; cost of waiting two quarters" },
-    { key: "constraints", label: "Hidden constraints", hint: "Union, contractual, IP, licensing" },
+    { key: "constraints", label: "Other constraints", hint: "Union, contractual, IP, licensing" },
   ],
 };
 
@@ -83,8 +76,28 @@ export const CoverageIndicator = ({
   const detailFindings = detail?.findings ?? {};
   const gathered = activeArea ? countFound(activeArea, detailFindings) : 0;
 
+  const totalSubs = AREAS.reduce((sum, a) => sum + SUBSECTIONS[a.key].length, 0);
+  const totalGathered = coverage
+    ? AREAS.reduce((sum, a) => sum + countFound(a.key, coverage[a.key]?.findings), 0)
+    : 0;
+  const progressPct = totalSubs > 0 ? (totalGathered / totalSubs) * 100 : 0;
+
   const Body = (
     <>
+      {/* Total progress bar */}
+      <div className="px-4 pt-2 pb-3">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Overall progress</span>
+          <span className="text-[11px] font-bold tabular-nums text-foreground">{totalGathered}/{totalSubs}</span>
+        </div>
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-500"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+      </div>
+
       <div className="joseph-coverage">
         {AREAS.map((a, i) => {
           const item = coverage?.[a.key];

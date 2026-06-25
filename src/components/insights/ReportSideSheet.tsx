@@ -7,7 +7,6 @@ import {
   Calendar,
   User,
   ExternalLink,
-  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -18,9 +17,16 @@ import {
 } from "@/services/consultingAgentApi";
 import { QuadrantChip } from "./QuadrantChip";
 
+interface AssessmentOverride {
+  quadrant: string;
+  impact: number;
+  speed: number;
+}
+
 interface ReportSideSheetProps {
   assessment: InsightAssessment | null;
   onClose: () => void;
+  onQuadrantOverride?: (id: string, override: AssessmentOverride | null) => void;
 }
 
 const SUB_SCORE_LABELS: { key: SubScoreKey; label: string; group: "impact" | "speed" }[] = [
@@ -303,7 +309,7 @@ const renderMarkdown = (md: string) => {
   return out;
 };
 
-export const ReportSideSheet = ({ assessment, onClose }: ReportSideSheetProps) => {
+export const ReportSideSheet = ({ assessment, onClose, onQuadrantOverride }: ReportSideSheetProps) => {
   const open = assessment !== null;
 
   // Leadership-adjustable scores. Seeded from the agent's assessment; reset
@@ -330,6 +336,21 @@ export const ReportSideSheet = ({ assessment, onClose }: ReportSideSheetProps) =
   );
   const resetScores = () =>
     setScores({ ...ZERO_SCORES, ...(assessment?.sub_scores ?? {}) });
+
+  // Notify parent whenever leadership scores differ — passes updated quadrant
+  // AND updated axes so the matrix dot moves to the correct position.
+  useEffect(() => {
+    if (!assessment || !onQuadrantOverride) return;
+    if (adjusted) {
+      onQuadrantOverride(assessment.id, {
+        quadrant: liveQuadrant,
+        impact: liveImpact,
+        speed: liveSpeed,
+      });
+    } else {
+      onQuadrantOverride(assessment.id, null);
+    }
+  }, [liveQuadrant, liveImpact, liveSpeed, adjusted, assessment?.id]);
 
   // Close on Escape
   useEffect(() => {
@@ -425,16 +446,6 @@ export const ReportSideSheet = ({ assessment, onClose }: ReportSideSheetProps) =
                   <span className="insights-sheet__section-num">01</span>
                   Scoring breakdown
                   {adjusted && <span className="insights-sheet__whatif">what-if</span>}
-                  {adjusted && (
-                    <button
-                      type="button"
-                      className="insights-sheet__reset"
-                      onClick={resetScores}
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                      Reset to Joseph&rsquo;s
-                    </button>
-                  )}
                 </div>
 
                 <div className="insights-sheet__axis-grid">
@@ -509,12 +520,19 @@ export const ReportSideSheet = ({ assessment, onClose }: ReportSideSheetProps) =
                           style={{ ["--fill" as any]: `${fill}%` }}
                           aria-label={`${label} score`}
                         />
+                        {changed && (
+                          <div className="flex items-center gap-2 mt-1 mb-0.5">
+                            <span className="text-[10px] text-muted-foreground w-16 text-right shrink-0">Joseph's</span>
+                            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-muted-foreground/50 rounded-full transition-all duration-300"
+                                style={{ width: `${((Math.min(5, Math.max(1, orig)) - 1) / 4) * 100}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] tabular-nums text-muted-foreground w-6">{orig.toFixed(1)}</span>
+                          </div>
+                        )}
                         <p className="insights-score__rationale">
-                          {changed && (
-                            <span className="insights-score__override">
-                              Leadership override ·{" "}
-                            </span>
-                          )}
                           {RATIONALE[key][bandOf(v)]}
                         </p>
                       </div>
@@ -557,15 +575,6 @@ export const ReportSideSheet = ({ assessment, onClose }: ReportSideSheetProps) =
               >
                 <FileType className="w-3.5 h-3.5 mr-1.5" />
                 DOCX
-              </Button>
-              <Button
-                size="sm"
-                className="ml-auto"
-                disabled
-                title="Velox handoff is available for the current session's assessment"
-              >
-                <ArrowRight className="w-3.5 h-3.5 mr-1.5" />
-                Velox handoff
               </Button>
             </div>
           </>

@@ -23,7 +23,7 @@ const AccessDenied = () => {
 
         {/* Description */}
         <p className="text-lg text-gray-700 leading-relaxed px-4">
-          You don't have access to <span className="font-semibold">Velox</span>.
+          You don't have access to <span className="font-semibold">this application</span>.
           <br />
           Please follow the steps mentioned in the document below to raise a request.
         </p>
@@ -34,7 +34,7 @@ const AccessDenied = () => {
           onClick={() => window.open(USER_GUIDE_URL, "_blank")}
         >
           <ExternalLink className="w-5 h-5" />
-          User Guide - Velox
+          User Guide
         </Button>
 
         {/* Signed-in info + sign out */}

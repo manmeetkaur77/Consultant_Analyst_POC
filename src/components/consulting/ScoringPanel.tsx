@@ -26,6 +26,14 @@ const SPEED_KEYS: { key: SubScoreKey; label: string; idx: string }[] = [
   { key: "measurement",   label: "Measurement",        idx: "s.3" },
 ];
 
+const QUADRANT_LABEL: Record<string, string> = {
+  "Transformational Value": "Transformational",
+  "Accelerator": "Transformational",
+  "Quick Win": "Accelerators",
+  "Incremental Growth": "Quick Wins",
+  "Defer": "Incremental Growth",
+};
+
 const bandFor = (value: number | null): "high" | "med" | "low" | "empty" => {
   if (value === null) return "empty";
   if (value >= 3.67) return "high";
@@ -476,7 +484,7 @@ export const ScoringPanel = ({
         <span className="joseph-sheet__title-text">Scoring ledger</span>
         {scores?.quadrant && (
           <span className="ml-auto text-[9px] font-mono font-bold tracking-[0.18em] uppercase text-primary">
-            → {scores.quadrant}
+            → {QUADRANT_LABEL[scores.quadrant] ?? scores.quadrant}
           </span>
         )}
       </div>

@@ -16,7 +16,10 @@ interface QuadrantChipProps {
  */
 const SHORT_LABEL: Record<string, string> = {
   "Transformational Value": "Transformational",
-  "Incremental Growth": "Incremental",
+  "Accelerator": "Transformational",
+  "Quick Win": "Accelerators",
+  "Incremental Growth": "Quick Wins",
+  "Defer": "Incremental Growth",
 };
 
 export const QuadrantChip = ({

@@ -52,7 +52,7 @@ try {
 document.documentElement.setAttribute("data-theme", THEME);
 
 // Set favicon and page title based on theme
-document.title = "Velox";
+document.title = THEME === "siriusai" ? "SiriusAI" : "DLX";
 const favicon = document.querySelector<HTMLLinkElement>("link[rel='icon']");
 if (favicon) {
     const themedFavicon = THEME === "siriusai" ? "favicon_sirius.ico" : "dlx-logo.png";

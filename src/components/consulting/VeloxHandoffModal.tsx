@@ -48,12 +48,12 @@ export const VeloxHandoffModal = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ArrowRight className="w-4 h-4 text-primary" />
-            Velox handoff payload
+            Handoff payload
           </DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
           This payload contains the sponsor, planning value, open threads, and
-          viability flags that Velox needs to plan the implementation.
+          viability flags needed to plan the implementation.
         </p>
         <pre className="mt-3 max-h-80 overflow-auto rounded-md border bg-muted/30 p-3 text-[11px] font-mono leading-relaxed">
           {jsonText}

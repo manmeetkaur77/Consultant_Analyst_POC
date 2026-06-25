@@ -1,17 +1,8 @@
 import { useState, useEffect } from "react";
 import {
-  FileText,
-  BookOpen,
-  Ticket,
-  Palette,
-  PenTool,
   HelpCircle,
-  MessageSquare,
   ChevronLeft,
   X,
-  Code2,
-  FlaskConical,
-  Workflow,
   Loader2,
   GitCompareArrows,
   GitPullRequest,
@@ -100,7 +91,7 @@ const navigationItems = [
   {
     icon: Library,
     label: "Insights",
-    description: "AI use cases assessed across the org",
+    description: "Org-wide AI use cases",
     id: "insights",
     path: "/insights",
     alwaysVisible: true,
@@ -115,9 +106,6 @@ const navigationItems = [
   },
 ];
 
-type NavItem = (typeof navigationItems)[number];
-
-
 interface SidebarProps {
   showBackButton?: boolean;
   onBack?: () => void;
@@ -128,7 +116,7 @@ interface SidebarProps {
   onMobileClose?: () => void;
 }
 
-export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, currentView, isMobile, onMobileClose }: SidebarProps) => {
+export const Sidebar = ({ collapsed, onToggleCollapse, currentView, isMobile, onMobileClose }: SidebarProps) => {
   const navigate = useNavigate();
   const { hasModuleAccess } = useAuth();
   const [supportOpen, setSupportOpen] = useState(false);
@@ -150,7 +138,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
 
   // Map current page to heading text to search for in the user guide
   const MODULE_HEADING_MAP: Record<string, string> = {
-    overview: "Velox Home Page",
+    overview: "Home Page",
     brd: "BRD Generation Module",
     analyst: "BRD Generation by conversing with AI",
     confluence: "Planning Module",
@@ -303,6 +291,25 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
               className="h-[32px] w-auto"
             />
           )}
+          {THEME !== "siriusai" && (collapsed && !isMobile) && (
+            <img
+              src={`${import.meta.env.BASE_URL}dlx-logo.png`}
+              alt="DELUXE"
+              className="h-[32px] w-auto"
+            />
+          )}
+          {THEME !== "siriusai" && (!collapsed || isMobile) && (
+            <>
+              <img
+                src={`${import.meta.env.BASE_URL}dlx-logo.png`}
+                alt="DELUXE"
+                className="h-[32px] w-auto flex-shrink-0"
+              />
+              <span className="text-base font-bold tracking-widest uppercase text-primary leading-none">
+                DELUXE
+              </span>
+            </>
+          )}
         </Link>
 
         {isMobile && (
@@ -321,40 +328,14 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         {/* Tools Section */}
         <div className="p-4 border-b border-sidebar-border">
-          {!isMobile && showBackButton && (
+          {!isMobile && (
             <Button
               variant="ghost"
               onClick={onToggleCollapse}
-              className={`w-full ${collapsed ? 'justify-center' : 'justify-between'} p-0 h-auto mb-3 text-muted-foreground hover:text-foreground hover:bg-transparent`}
+              className={`w-full ${collapsed ? 'justify-center' : 'justify-end'} p-0 h-auto mb-3 text-muted-foreground hover:text-foreground hover:bg-transparent`}
             >
-              {!collapsed && (
-                <div className="text-xs font-medium uppercase tracking-wide">
-                  TOOLS
-                </div>
-              )}
               <ChevronLeft className={`w-4 h-4 transition-transform ${collapsed ? 'rotate-180' : 'rotate-0'}`} />
             </Button>
-          )}
-          {!isMobile && !showBackButton && (
-            <Button
-              variant="ghost"
-              onClick={onToggleCollapse}
-              className={`w-full ${collapsed ? 'justify-center' : 'justify-between'} p-0 h-auto mb-3 text-muted-foreground hover:text-foreground hover:bg-transparent`}
-            >
-              {!collapsed && (
-                <div className="text-xs font-medium uppercase tracking-wide">
-                  TOOLS
-                </div>
-              )}
-              <ChevronLeft className={`w-4 h-4 transition-transform ${collapsed ? 'rotate-180' : 'rotate-0'}`} />
-            </Button>
-          )}
-          {isMobile && (
-            <div className="w-full p-0 h-auto mb-3">
-              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                TOOLS
-              </div>
-            </div>
           )}
           {(!collapsed || isMobile) && (
             <div className="space-y-1">
@@ -465,7 +446,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
                 <HelpCircle className="w-5 h-5 text-white" />
               </div>
               <div>
-                <DialogTitle className="text-lg font-bold text-gray-900">Velox User Guide</DialogTitle>
+                <DialogTitle className="text-lg font-bold text-gray-900">User Guide</DialogTitle>
                 <p className="text-xs text-gray-500 mt-0.5">Documentation &amp; setup instructions</p>
               </div>
             </div>
