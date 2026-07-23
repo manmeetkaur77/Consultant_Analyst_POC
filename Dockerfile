@@ -27,7 +27,12 @@ RUN npm run build
 
 FROM public.ecr.aws/nginx/nginx:alpine
 
+# Apply Alpine security patches at build time. The nginx:alpine base ships
+# curl/libcurl, which image scanners flagged (CVE-2026-* against curl 8.19.0).
+# `apk upgrade` pulls the latest patched packages from the Alpine repo, which
+# remediates those findings and prevents them recurring if the base drifts.
 RUN apk upgrade --no-cache
+
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 
