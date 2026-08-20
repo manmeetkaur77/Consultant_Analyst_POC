@@ -40,6 +40,33 @@ COVERAGE_AREAS = (
     "instinct",
 )
 
+# Valid sub-section slugs per coverage area. Used to whitelist the keys the
+# agent sends in a coverage event's `findings` object, so a hallucinated slug
+# never lands in state. Keep in sync with the sub-section framework in
+# joseph_prompt.py and the SUBSECTIONS map in the frontend CoverageIndicator.
+COVERAGE_SUBSECTIONS: dict[str, tuple[str, ...]] = {
+    "qualification": ("solution_fit", "sponsor", "duplication", "scope"),
+    "value": ("quantitative", "qualitative"),
+    "viability": ("data", "platform", "resources", "money", "time"),
+    "drivers": (
+        "monetary",
+        "regulatory",
+        "strategic",
+        "ease",
+        "dependencies",
+        "reversibility",
+        "cost_of_delay",
+    ),
+    "instinct": (
+        "politics",
+        "track_record",
+        "adoption",
+        "failure_mode",
+        "build_buy",
+        "constraints",
+    ),
+}
+
 
 @dataclass
 class SubScore:
